@@ -1,9 +1,11 @@
 package com.research.experimentplatform.controller;
 
 import com.research.experimentplatform.dto.SyncUserRequest;
+import com.research.experimentplatform.dto.UpdateUserProfileRequest;
 import com.research.experimentplatform.dto.UserDTO;
 import com.research.experimentplatform.model.UserRole;
 import com.research.experimentplatform.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,6 +25,15 @@ public class UserController {
     public ResponseEntity<UserDTO> getMe(Authentication authentication) {
         String supabaseId = (String) authentication.getDetails();
         return ResponseEntity.ok(userService.getUserBySupabaseId(supabaseId));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserDTO> updateMyProfile(
+            Authentication authentication,
+            @Valid @RequestBody UpdateUserProfileRequest request) {
+        String supabaseId = (String) authentication.getDetails();
+        UserDTO updatedUser = userService.updateProfile(supabaseId, request);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @PostMapping("/sync")

@@ -71,7 +71,38 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    @Transactional
+    public UserDTO updateProfile(String supabaseId, com.research.experimentplatform.dto.UpdateUserProfileRequest request) {
+        User user = userRepository.findBySupabaseId(supabaseId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        if (request.firstName() != null) user.setFirstName(request.firstName());
+        if (request.lastName() != null) user.setLastName(request.lastName());
+        if (request.institution() != null) user.setInstitution(request.institution());
+        if (request.department() != null) user.setDepartment(request.department());
+        if (request.position() != null) user.setPosition(request.position());
+        if (request.bio() != null) user.setBio(request.bio());
+        if (request.orcidId() != null) user.setOrcidId(request.orcidId());
+        if (request.language() != null) user.setLanguage(request.language());
+        if (request.timezone() != null) user.setTimezone(request.timezone());
+        
+        return convertToDTO(userRepository.save(user));
+    }
+
     public UserDTO convertToDTO(User user) {
-        return new UserDTO(user.getId(), user.getEmail(), user.getRole());
+        return new UserDTO(
+            user.getId(),
+            user.getEmail(),
+            user.getRole(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getInstitution(),
+            user.getDepartment(),
+            user.getPosition(),
+            user.getBio(),
+            user.getOrcidId(),
+            user.getLanguage(),
+            user.getTimezone()
+        );
     }
 }

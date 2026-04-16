@@ -1,17 +1,17 @@
 package com.research.experimentplatform.dto;
 
-import com.research.experimentplatform.model.UserRole;
+import jakarta.validation.constraints.Size;
 
-public record UserDTO(
-    Long id,
-    String email,
-    UserRole role,
+public record UpdateUserProfileRequest(
     String firstName,
     String lastName,
     String institution,
     String department,
     String position,
+    
+    @Size(max = 1000, message = "Bio must not exceed 1000 characters")
     String bio,
+    
     String orcidId,
     String language,
     String timezone
