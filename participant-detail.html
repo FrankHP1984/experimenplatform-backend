@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empiria — Detalle de participante</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:      #080F1E;
+      --surface: #0D1729;
+      --card:    #111E35;
+      --card2:   #142240;
+      --border:  rgba(255,255,255,0.07);
+      --violet:  #6C4DE6;
+      --violet-d:#5538CC;
+      --cyan:    #00D4AA;
+      --cyan-d:  #00B891;
+      --text:    #E8EEF8;
+      --muted:   #6B7A99;
+      --danger:  #E05C6B;
+      --warn:    #F0A500;
+      --success: #22C55E;
+      --blue:    #60A5FA;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo span { color: var(--cyan); }
+
+    .sidebar-user {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), #9370F0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    .user-info { min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-plan { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+      text-decoration: none;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.04); color: var(--text); }
+    .nav-item.active { background: rgba(108,77,230,.15); color: var(--violet); }
+    .nav-item svg { flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--violet);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    .sidebar-footer {
+      padding: 12px 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── MAIN AREA ── */
+    .main-area {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* topbar */
+    .topbar {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,15,30,.85);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .breadcrumb a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb-sep { color: rgba(255,255,255,.2); }
+    .breadcrumb-current { color: var(--text); font-weight: 500; }
+
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.04); }
+    .btn-danger-ghost {
+      background: transparent;
+      border: 1px solid rgba(224,92,107,.3);
+      color: var(--danger);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn-danger-ghost:hover { border-color: var(--danger); background: rgba(224,92,107,.07); }
+
+    /* ── PAGE CONTENT ── */
+    .page-content {
+      padding: 28px;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      grid-template-rows: auto 1fr;
+      gap: 20px;
+      max-width: 1200px;
+    }
+
+    /* ── PARTICIPANT HEADER CARD ── */
+    .participant-header {
+      grid-column: 1 / -1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .part-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0,212,170,.3), rgba(0,212,170,.1));
+      border: 2px solid rgba(0,212,170,.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--cyan);
+      flex-shrink: 0;
+    }
+    .part-main { flex: 1; min-width: 0; }
+    .part-name { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .part-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .part-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .part-meta-item strong { color: var(--text); font-weight: 500; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-active   { background: rgba(0,212,170,.12); color: var(--cyan); border: 1px solid rgba(0,212,170,.25); }
+    .status-pending  { background: rgba(240,165,0,.12);  color: var(--warn); border: 1px solid rgba(240,165,0,.25); }
+    .status-completed{ background: rgba(96,165,250,.12); color: var(--blue); border: 1px solid rgba(96,165,250,.25); }
+    .status-withdrawn{ background: rgba(224,92,107,.12); color: var(--danger); border: 1px solid rgba(224,92,107,.25); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status-dot.pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .group-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .group-exp { background: rgba(0,212,170,.1); color: var(--cyan); border: 1px solid rgba(0,212,170,.2); }
+    .group-ctrl { background: rgba(108,77,230,.1); color: #A78BF9; border: 1px solid rgba(108,77,230,.2); }
+
+    .part-stats-strip {
+      display: flex;
+      gap: 0;
+      margin-left: auto;
+    }
+    .part-stat {
+      text-align: center;
+      padding: 0 20px;
+      border-left: 1px solid var(--border);
+    }
+    .part-stat-val {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      display: block;
+    }
+    .part-stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+
+    /* ── PHASE TIMELINE + RESPONSES (left column) ── */
+    .responses-column { display: flex; flex-direction: column; gap: 16px; }
+
+    .phase-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .phase-block-header {
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .2s;
+    }
+    .phase-block-header:hover { background: rgba(255,255,255,.02); }
+
+    .phase-number-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .phase-done    { background: rgba(0,212,170,.15); color: var(--cyan); border: 1px solid rgba(0,212,170,.3); }
+    .phase-active  { background: rgba(108,77,230,.2); color: #A78BF9; border: 1px solid rgba(108,77,230,.4); }
+    .phase-pending { background: rgba(255,255,255,.05); color: var(--muted); border: 1px solid var(--border); }
+
+    .phase-block-info { flex: 1; }
+    .phase-block-name { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+    .phase-block-meta { font-size: 12px; color: var(--muted); }
+
+    .phase-status-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .tag-done    { background: rgba(0,212,170,.1); color: var(--cyan); }
+    .tag-active  { background: rgba(108,77,230,.15); color: #A78BF9; }
+    .tag-pending { background: rgba(255,255,255,.05); color: var(--muted); }
+    .tag-overdue { background: rgba(240,165,0,.12); color: var(--warn); }
+
+    .phase-chevron {
+      color: var(--muted);
+      transition: transform .25s;
+    }
+    .phase-block.open .phase-chevron { transform: rotate(180deg); }
+
+    /* response body */
+    .phase-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s cubic-bezier(.4,0,.2,1);
+    }
+    .phase-block.open .phase-body { max-height: 2000px; }
+
+    .phase-body-inner {
+      border-top: 1px solid var(--border);
+      padding: 20px 24px;
+    }
+
+    .response-row {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .response-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .response-q {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .rq-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--muted);
+    }
+
+    .response-answer {
+      font-size: 15px;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .response-answer.number-answer {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--violet);
+    }
+    .answer-unit {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
+    /* Scale visual */
+    .scale-visual {
+      display: flex;
+      gap: 5px;
+      margin-top: 4px;
+    }
+    .scale-pip {
+      height: 6px;
+      flex: 1;
+      border-radius: 3px;
+      background: rgba(255,255,255,.08);
+    }
+    .scale-pip.filled { background: var(--violet); }
+    .scale-pip.selected { background: var(--cyan); box-shadow: 0 0 8px rgba(0,212,170,.5); }
+    .scale-val-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+    /* Boolean */
+    .bool-answer {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .bool-yes-ans { background: rgba(0,212,170,.1); color: var(--cyan); border: 1px solid rgba(0,212,170,.2); }
+    .bool-no-ans  { background: rgba(224,92,107,.1); color: var(--danger); border: 1px solid rgba(224,92,107,.2); }
+
+    /* MC */
+    .mc-answer {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(108,77,230,.08);
+      border: 1px solid rgba(108,77,230,.2);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .mc-check { color: var(--violet); flex-shrink: 0; margin-top: 1px; }
+
+    /* Text */
+    .text-answer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    /* No response yet */
+    .no-response {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 18px 20px;
+      background: rgba(255,255,255,.02);
+      border: 1px dashed rgba(255,255,255,.08);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── RIGHT COLUMN ── */
+    .info-column { display: flex; flex-direction: column; gap: 16px; }
+
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .info-card-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      font-size: 13px;
+    }
+    .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .info-label { color: var(--muted); }
+    .info-val { color: var(--text); font-weight: 500; text-align: right; max-width: 160px; word-break: break-word; }
+
+    /* Progress ring */
+    .progress-ring-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .ring-svg { flex-shrink: 0; }
+    .ring-track { fill: none; stroke: rgba(255,255,255,.07); stroke-width: 5; }
+    .ring-fill  { fill: none; stroke: url(#ring-grad); stroke-width: 5; stroke-linecap: round;
+                  stroke-dasharray: 176; stroke-dashoffset: 59; transform: rotate(-90deg); transform-origin: center; transition: stroke-dashoffset .8s ease; }
+    .ring-label { text-anchor: middle; dominant-baseline: middle; fill: var(--text); font-size: 16px; font-weight: 700; font-family: 'Inter', sans-serif; }
+    .ring-info { }
+    .ring-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .ring-sub { font-size: 12px; color: var(--muted); }
+
+    /* Phase timeline mini */
+    .mini-timeline { display: flex; flex-direction: column; gap: 0; }
+    .mt-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 0 0 16px 0;
+      position: relative;
+    }
+    .mt-item:last-child { padding-bottom: 0; }
+    .mt-item:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 24px;
+      width: 2px;
+      height: calc(100% - 8px);
+      background: var(--border);
+    }
+    .mt-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      z-index: 1;
+    }
+    .mt-dot-done { background: rgba(0,212,170,.15); border: 2px solid var(--cyan); color: var(--cyan); }
+    .mt-dot-active { background: rgba(108,77,230,.25); border: 2px solid var(--violet); color: #A78BF9; }
+    .mt-dot-pending { background: var(--surface); border: 2px solid var(--border); color: var(--muted); }
+
+    .mt-content { padding-top: 2px; }
+    .mt-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+    .mt-date { font-size: 11px; color: var(--muted); }
+
+    /* Activity list */
+    .activity-list { display: flex; flex-direction: column; gap: 12px; }
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .act-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+    .act-cyan    { background: var(--cyan); box-shadow: 0 0 6px rgba(0,212,170,.5); }
+    .act-violet  { background: var(--violet); }
+    .act-muted   { background: var(--muted); }
+    .act-content { flex: 1; }
+    .act-text    { color: var(--text); line-height: 1.45; }
+    .act-time    { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Reminder modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 480px;
+      max-width: 94vw;
+      padding: 28px;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .modal-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--violet); }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--violet), var(--violet-d));
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 16px rgba(108,77,230,.3);
+      transition: all .2s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); }
+
+    /* withdraw confirm */
+    .withdraw-confirm {
+      background: rgba(224,92,107,.07);
+      border: 1px solid rgba(224,92,107,.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .withdraw-title { font-size: 14px; font-weight: 600; color: var(--danger); margin-bottom: 5px; }
+    .withdraw-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* group change */
+    .group-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .group-option {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .group-option:hover { border-color: rgba(255,255,255,.2); }
+    .group-option.selected-ctrl { border-color: #A78BF9; background: rgba(108,77,230,.1); }
+    .group-option.selected-exp  { border-color: var(--cyan); background: rgba(0,212,170,.08); }
+    .group-opt-name { font-size: 14px; font-weight: 600; margin-top: 6px; }
+    .group-opt-count { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .page-content { grid-template-columns: 1fr; padding: 16px; }
+      .participant-header { flex-wrap: wrap; }
+      .part-stats-strip { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">Empiri<span>a</span></div>
+  <div class="sidebar-user">
+    <div class="user-avatar">CR</div>
+    <div class="user-info">
+      <div class="user-name">Carlos Romero</div>
+      <div class="user-plan">Plan Researcher</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="dashboard-researcher.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item active" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      Experimentos
+      <span class="nav-badge">1</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Participantes
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Respuestas
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Perfil
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Cerrar sesión
+    </a>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main-area">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="breadcrumb">
+      <a href="dashboard-researcher.html">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="experiment-detail.html">Efecto del ejercicio físico</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="experiment-detail.html">Participantes</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Ana García López</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-ghost" onclick="openGroupModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M4.22 4.22l2.12 2.12m11.32 11.32 2.12 2.12M2 12h3m14 0h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+        Cambiar grupo
+      </button>
+      <button class="btn-ghost" onclick="openReminderModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Enviar recordatorio
+      </button>
+      <button class="btn-danger-ghost" onclick="openWithdrawModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        Dar de baja
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="page-content">
+
+    <!-- PARTICIPANT HEADER -->
+    <div class="participant-header">
+      <div class="part-avatar">AG</div>
+      <div class="part-main">
+        <div class="part-name">Ana García López</div>
+        <div class="part-meta">
+          <span class="status-badge status-active"><span class="status-dot pulse"></span>Activa</span>
+          <span class="group-badge group-exp">Grupo Experimental</span>
+          <div class="part-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Inscrita el&nbsp;<strong style="color:var(--text);font-weight:500">28 de marzo de 2026</strong></span>
+          </div>
+          <div class="part-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Última actividad <strong>hace 2 días</strong>
+          </div>
+          <div class="part-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <strong>ana.garcia@univ.es</strong>
+          </div>
+        </div>
+      </div>
+      <div class="part-stats-strip">
+        <div class="part-stat">
+          <span class="part-stat-val" style="color:var(--cyan)">2/3</span>
+          <div class="part-stat-label">Fases completadas</div>
+        </div>
+        <div class="part-stat">
+          <span class="part-stat-val">12</span>
+          <div class="part-stat-label">Respuestas totales</div>
+        </div>
+        <div class="part-stat">
+          <span class="part-stat-val" style="color:var(--violet)">67%</span>
+          <div class="part-stat-label">Progreso</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESPONSES COLUMN -->
+    <div class="responses-column">
+
+      <!-- PHASE 1 — done -->
+      <div class="phase-block open" id="phase-1">
+        <div class="phase-block-header" onclick="togglePhase('phase-1')">
+          <div class="phase-number-circle phase-done">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="phase-block-info">
+            <div class="phase-block-name">Fase 1 — Pre-test</div>
+            <div class="phase-block-meta">Completada el 1 de abril · 6 respuestas</div>
+          </div>
+          <span class="phase-status-tag tag-done">Completada</span>
+          <svg class="phase-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">1</div>
+                ¿Cuántas horas de ejercicio aeróbico realizas habitualmente por semana?
+              </div>
+              <div class="response-answer number-answer">3.5 <span class="answer-unit">horas</span></div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">2</div>
+                Valoración del estado de ánimo general (escala 1-10)
+              </div>
+              <div class="response-answer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="font-size:24px;font-weight:700;color:var(--violet)">7</span>
+                  <div>
+                    <div class="scale-visual">
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip selected"></div>
+                      <div class="scale-pip"></div>
+                      <div class="scale-pip"></div>
+                      <div class="scale-pip"></div>
+                    </div>
+                    <div class="scale-val-label">7 de 10 — Bueno</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">3</div>
+                ¿Has tenido dificultades para conciliar el sueño en los últimos 7 días?
+              </div>
+              <div class="response-answer">
+                <span class="bool-answer bool-no-ans">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  No
+                </span>
+              </div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">4</div>
+                Nivel de motivación para continuar en el programa
+              </div>
+              <div class="response-answer">
+                <div class="mc-answer">
+                  <svg class="mc-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Muy motivado/a, estoy disfrutando del proceso
+                </div>
+              </div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">5</div>
+                Efecto percibido del ejercicio en la capacidad de concentración (1-10)
+              </div>
+              <div class="response-answer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="font-size:24px;font-weight:700;color:var(--violet)">8</span>
+                  <div>
+                    <div class="scale-visual">
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip selected"></div>
+                      <div class="scale-pip"></div>
+                      <div class="scale-pip"></div>
+                    </div>
+                    <div class="scale-val-label">8 de 10 — Muy positivo</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">6</div>
+                Observaciones adicionales (opcional)
+              </div>
+              <div class="response-answer">
+                <div class="text-answer">
+                  "Llevo unos meses con una rutina bastante regular, principalmente running matutino y algo de yoga. Me encuentro bien en general y con ganas de participar en el estudio."
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 2 — done -->
+      <div class="phase-block open" id="phase-2">
+        <div class="phase-block-header" onclick="togglePhase('phase-2')">
+          <div class="phase-number-circle phase-done">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="phase-block-info">
+            <div class="phase-block-name">Fase 2 — Post-test</div>
+            <div class="phase-block-meta">Completada el 9 de abril · 6 respuestas</div>
+          </div>
+          <span class="phase-status-tag tag-done">Completada</span>
+          <svg class="phase-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">1</div>
+                ¿Cuántas horas de ejercicio aeróbico has realizado esta semana?
+              </div>
+              <div class="response-answer number-answer">5.0 <span class="answer-unit">horas</span></div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">2</div>
+                Valoración del estado de ánimo general (escala 1-10)
+              </div>
+              <div class="response-answer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="font-size:24px;font-weight:700;color:var(--cyan)">9</span>
+                  <div>
+                    <div class="scale-visual">
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip selected" style="background:var(--cyan);box-shadow:0 0 8px rgba(0,212,170,.5)"></div>
+                      <div class="scale-pip"></div>
+                    </div>
+                    <div class="scale-val-label">9 de 10 — Excelente</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">3</div>
+                ¿Has tenido dificultades para conciliar el sueño en los últimos 7 días?
+              </div>
+              <div class="response-answer">
+                <span class="bool-answer bool-no-ans">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  No
+                </span>
+              </div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">4</div>
+                Nivel de motivación para continuar en el programa
+              </div>
+              <div class="response-answer">
+                <div class="mc-answer">
+                  <svg class="mc-check" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Muy motivado/a, estoy disfrutando del proceso
+                </div>
+              </div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">5</div>
+                Efecto percibido del ejercicio en la capacidad de concentración (1-10)
+              </div>
+              <div class="response-answer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="font-size:24px;font-weight:700;color:var(--cyan)">9</span>
+                  <div>
+                    <div class="scale-visual">
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip filled"></div>
+                      <div class="scale-pip selected" style="background:var(--cyan);box-shadow:0 0 8px rgba(0,212,170,.5)"></div>
+                      <div class="scale-pip"></div>
+                    </div>
+                    <div class="scale-val-label">9 de 10 — Muy positivo</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="response-row">
+              <div class="response-q">
+                <div class="rq-num">6</div>
+                Observaciones adicionales (opcional)
+              </div>
+              <div class="response-answer">
+                <div class="text-answer">
+                  "Ha sido un mes muy positivo. He notado mejoras claras en la concentración y en el sueño, y me siento más enérgica en general. El programa me ha ayudado a ser más constante."
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 3 — pending -->
+      <div class="phase-block" id="phase-3">
+        <div class="phase-block-header" onclick="togglePhase('phase-3')">
+          <div class="phase-number-circle phase-pending">3</div>
+          <div class="phase-block-info">
+            <div class="phase-block-name">Fase 3 — Seguimiento final</div>
+            <div class="phase-block-meta">Disponible a partir del 28 de abril de 2026</div>
+          </div>
+          <span class="phase-status-tag tag-pending">Pendiente</span>
+          <svg class="phase-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <div class="no-response">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Esta fase aún no está disponible. Se habilitará el 28 de abril de 2026.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /responses-column -->
+
+    <!-- RIGHT COLUMN -->
+    <div class="info-column">
+
+      <!-- Progress -->
+      <div class="info-card">
+        <div class="info-card-title">Progreso general</div>
+        <div class="progress-ring-wrap">
+          <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
+            <defs>
+              <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#6C4DE6"/>
+                <stop offset="100%" stop-color="#00D4AA"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-track" cx="36" cy="36" r="28"/>
+            <circle class="ring-fill" cx="36" cy="36" r="28"/>
+            <text class="ring-label" x="36" y="37">67%</text>
+          </svg>
+          <div class="ring-info">
+            <div class="ring-title">2 de 3 fases</div>
+            <div class="ring-sub">12 respuestas registradas</div>
+          </div>
+        </div>
+        <div class="mini-timeline">
+          <div class="mt-item">
+            <div class="mt-dot mt-dot-done">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="mt-content">
+              <div class="mt-name">Pre-test</div>
+              <div class="mt-date">Completada el 1 abr</div>
+            </div>
+          </div>
+          <div class="mt-item">
+            <div class="mt-dot mt-dot-done">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="mt-content">
+              <div class="mt-name">Post-test</div>
+              <div class="mt-date">Completada el 9 abr</div>
+            </div>
+          </div>
+          <div class="mt-item">
+            <div class="mt-dot mt-dot-pending">3</div>
+            <div class="mt-content">
+              <div class="mt-name" style="color:var(--muted)">Seguimiento final</div>
+              <div class="mt-date">Disponible el 28 abr</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enrollment data -->
+      <div class="info-card">
+        <div class="info-card-title">Datos de inscripción</div>
+        <div class="info-row">
+          <span class="info-label">Fecha de nacimiento</span>
+          <span class="info-val">14 de mayo de 1993</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Sexo</span>
+          <span class="info-val">Femenino</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Practica deporte</span>
+          <span class="info-val" style="color:var(--cyan)">Si</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Nivel de actividad</span>
+          <span class="info-val">Moderado (3-5 días/semana)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Condiciones médicas</span>
+          <span class="info-val" style="color:var(--muted);font-style:italic">No indicadas</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Consentimiento RGPD</span>
+          <span class="info-val" style="color:var(--cyan)">Aceptado</span>
+        </div>
+      </div>
+
+      <!-- Activity -->
+      <div class="info-card">
+        <div class="info-card-title">Actividad reciente</div>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="act-dot act-cyan"></div>
+            <div class="act-content">
+              <div class="act-text">Completó el Post-test (Fase 2)</div>
+              <div class="act-time">Hace 2 días</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot act-violet"></div>
+            <div class="act-content">
+              <div class="act-text">Inicio del cuestionario Post-test</div>
+              <div class="act-time">Hace 2 días</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot act-muted"></div>
+            <div class="act-content">
+              <div class="act-text">Accedió a la plataforma</div>
+              <div class="act-time">Hace 5 días</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot act-cyan"></div>
+            <div class="act-content">
+              <div class="act-text">Completó el Pre-test (Fase 1)</div>
+              <div class="act-time">Hace 10 días</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="act-dot act-violet"></div>
+            <div class="act-content">
+              <div class="act-text">Inscripción confirmada en el estudio</div>
+              <div class="act-time">Hace 14 días</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /info-column -->
+  </div><!-- /page-content -->
+</div><!-- /main-area -->
+
+<!-- ── REMINDER MODAL ── -->
+<div class="modal-overlay" id="reminder-modal">
+  <div class="modal">
+    <h2 class="modal-title">Enviar recordatorio</h2>
+    <p class="modal-sub">Se enviará un correo a Ana García López sobre la próxima fase del estudio.</p>
+    <div class="field">
+      <label>Para</label>
+      <input type="email" value="ana.garcia@univ.es" readonly style="opacity:.6;cursor:default" />
+    </div>
+    <div class="field">
+      <label>Asunto</label>
+      <input type="text" value="Recordatorio: Fase 3 del estudio disponible próximamente" />
+    </div>
+    <div class="field">
+      <label>Mensaje personalizado (opcional)</label>
+      <textarea placeholder="Escribe un mensaje adicional para el participante..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('reminder-modal')">Cancelar</button>
+      <button class="btn-primary" onclick="closeModal('reminder-modal')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;margin-right:6px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar recordatorio
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── GROUP CHANGE MODAL ── -->
+<div class="modal-overlay" id="group-modal">
+  <div class="modal">
+    <h2 class="modal-title">Cambiar grupo</h2>
+    <p class="modal-sub">Reasignar a Ana García López a otro grupo de este experimento.</p>
+    <div class="group-options">
+      <div class="group-option" id="opt-ctrl" onclick="selectGroupOpt('ctrl')">
+        <div style="width:12px;height:12px;border-radius:50%;background:#A78BF9;margin-bottom:6px"></div>
+        <div class="group-opt-name">Control</div>
+        <div class="group-opt-count">4 participantes</div>
+      </div>
+      <div class="group-option selected-exp" id="opt-exp" onclick="selectGroupOpt('exp')">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--cyan);margin-bottom:6px"></div>
+        <div class="group-opt-name">Experimental</div>
+        <div class="group-opt-count" style="color:var(--cyan)">5 participantes · Actual</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:14px">Este cambio quedará registrado en el historial del participante.</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('group-modal')">Cancelar</button>
+      <button class="btn-primary" onclick="closeModal('group-modal')">Confirmar cambio</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── WITHDRAW MODAL ── -->
+<div class="modal-overlay" id="withdraw-modal">
+  <div class="modal">
+    <h2 class="modal-title">Dar de baja al participante</h2>
+    <div class="withdraw-confirm">
+      <div class="withdraw-title">Esta acción no se puede deshacer</div>
+      <div class="withdraw-text">Ana García López será retirada del estudio. Sus respuestas anteriores se conservarán pero no podrá completar las fases pendientes.</div>
+    </div>
+    <div class="field">
+      <label>Motivo de baja (opcional)</label>
+      <textarea placeholder="Ej: Retirada voluntaria, criterio de exclusión, pérdida de contacto..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('withdraw-modal')">Cancelar</button>
+      <button style="background:var(--danger);color:white;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;" onclick="closeModal('withdraw-modal')">Confirmar baja</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePhase(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function openReminderModal() {
+  document.getElementById('reminder-modal').classList.add('open');
+}
+function openGroupModal() {
+  document.getElementById('group-modal').classList.add('open');
+}
+function openWithdrawModal() {
+  document.getElementById('withdraw-modal').classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function selectGroupOpt(g) {
+  document.getElementById('opt-ctrl').className = 'group-option' + (g === 'ctrl' ? ' selected-ctrl' : '');
+  document.getElementById('opt-exp').className  = 'group-option' + (g === 'exp'  ? ' selected-exp'  : '');
+  if (g === 'exp') {
+    document.querySelector('#opt-exp .group-opt-count').textContent = '5 participantes · Actual';
+    document.querySelector('#opt-exp .group-opt-count').style.color = 'var(--cyan)';
+    document.querySelector('#opt-ctrl .group-opt-count').textContent = '4 participantes';
+    document.querySelector('#opt-ctrl .group-opt-count').style.color = '';
+  } else {
+    document.querySelector('#opt-ctrl .group-opt-count').textContent = '5 participantes · Actual';
+    document.querySelector('#opt-ctrl .group-opt-count').style.color = '#A78BF9';
+    document.querySelector('#opt-exp .group-opt-count').textContent = '4 participantes';
+    document.querySelector('#opt-exp .group-opt-count').style.color = '';
+  }
+}
+
+// close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => {
+    if (e.target === el) el.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>

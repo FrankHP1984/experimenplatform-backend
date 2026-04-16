@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empiria — Mi panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080F1E;
+      --bg2:     #0D1628;
+      --bg3:     #111D35;
+      --violet:  #6C4DE6;
+      --violet2: #8B6FF0;
+      --cyan:    #00D4AA;
+      --cyan2:   #00F0C0;
+      --white:   #F0F4FF;
+      --gray:    #8A96B0;
+      --gray2:   #5A6480;
+      --border:  rgba(108,77,230,0.15);
+      --border2: rgba(255,255,255,0.06);
+    }
+
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--white); overflow: hidden; }
+
+    .app { display: grid; grid-template-columns: 220px 1fr; height: 100vh; }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header { padding: 22px 20px 18px; border-bottom: 1px solid var(--border2); }
+
+    .logo { display: flex; align-items: center; gap: 9px; margin-bottom: 20px; }
+    .logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--violet), var(--cyan)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #fff; }
+    .logo-text { font-size: 16px; font-weight: 700; color: var(--white); }
+    .logo-text span { color: var(--cyan); }
+
+    .user-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border2); cursor: pointer; transition: all 0.2s; }
+    .user-card:hover { background: rgba(255,255,255,0.05); }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #4A8BF5, var(--cyan)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 12.5px; font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 10.5px; color: var(--gray); font-weight: 500; }
+    .chev svg { width: 14px; height: 14px; stroke: var(--gray2); fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .nav { flex: 1; padding: 16px 12px; }
+    .nav-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--gray2); padding: 0 8px; margin-bottom: 6px; margin-top: 16px; }
+    .nav-section-label:first-child { margin-top: 0; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; font-size: 13.5px; font-weight: 500; color: var(--gray); cursor: pointer; transition: all 0.18s; margin-bottom: 2px; border: 1px solid transparent; }
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--white); }
+    .nav-item.active { background: rgba(108,77,230,0.12); color: var(--white); border-color: rgba(108,77,230,0.2); font-weight: 600; }
+    .nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; flex-shrink: 0; }
+    .nav-badge { margin-left: auto; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+    .nav-badge.pending { background: rgba(251,213,36,0.15); color: #FBD524; }
+
+    .sidebar-footer { padding: 12px; border-top: 1px solid var(--border2); }
+    .nav-item.danger:hover { background: rgba(239,68,68,0.08); color: #F87171; }
+
+    /* ─── MAIN ─── */
+    .main { display: flex; flex-direction: column; overflow: hidden; }
+
+    .topbar { height: 56px; border-bottom: 1px solid var(--border2); padding: 0 28px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .topbar-title { font-size: 14px; font-weight: 700; color: var(--white); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; border: none; }
+    .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .btn.ghost { background: none; border: 1px solid var(--border2); color: var(--gray); }
+    .btn.ghost:hover { border-color: var(--border); color: var(--white); background: rgba(255,255,255,0.03); }
+
+    .content { flex: 1; overflow-y: auto; padding: 28px; }
+
+    /* ─── GREETING ─── */
+    .greeting { margin-bottom: 28px; }
+    .greeting-title { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 4px; }
+    .greeting-sub { font-size: 13.5px; color: var(--gray); }
+
+    /* ─── PENDING ALERT ─── */
+    .pending-alert {
+      background: linear-gradient(135deg, rgba(108,77,230,0.12), rgba(0,212,170,0.06));
+      border: 1px solid rgba(108,77,230,0.25);
+      border-radius: 14px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pending-alert:hover { border-color: rgba(108,77,230,0.4); background: linear-gradient(135deg, rgba(108,77,230,0.16), rgba(0,212,170,0.08)); }
+
+    .pending-alert-left { display: flex; align-items: center; gap: 14px; flex: 1; }
+
+    .pending-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(108,77,230,0.2);
+      border: 1px solid rgba(108,77,230,0.3);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pending-icon svg { width: 18px; height: 18px; stroke: var(--violet2); fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .pending-title { font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 2px; }
+    .pending-desc  { font-size: 12.5px; color: var(--gray); }
+
+    .pending-arrow svg { width: 18px; height: 18px; stroke: var(--violet2); fill: none; stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+
+    /* ─── STUDIES SECTION ─── */
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-title { font-size: 14px; font-weight: 700; color: var(--white); }
+
+    .studies-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
+
+    /* Study card */
+    .study-card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .study-card:hover { border-color: var(--border); }
+
+    .study-card-header {
+      padding: 18px 20px 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .study-card-left { flex: 1; min-width: 0; }
+
+    .study-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .study-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+    .study-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .study-status.active   { background: rgba(0,212,170,0.1);  color: var(--cyan); }
+    .study-status.finished { background: rgba(74,139,245,0.1); color: #4A8BF5; }
+    .study-status.pending  { background: rgba(251,213,36,0.1); color: #FBD524; }
+
+    .study-design { font-size: 11.5px; color: var(--gray); }
+
+    .study-name { font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; line-height: 1.3; }
+    .study-researcher { font-size: 12px; color: var(--gray); }
+
+    /* Phase timeline */
+    .study-timeline {
+      padding: 0 20px 14px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .timeline-phase {
+      flex: 1;
+      position: relative;
+    }
+
+    .timeline-phase-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .timeline-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      transition: all 0.2s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .timeline-dot.done {
+      background: rgba(0,212,170,0.15);
+      border: 1.5px solid rgba(0,212,170,0.4);
+      color: var(--cyan);
+    }
+    .timeline-dot.done svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+    .timeline-dot.current {
+      background: linear-gradient(135deg, var(--violet), #5A3BD4);
+      border: none;
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(108,77,230,0.2);
+      animation: glow 2s infinite;
+    }
+    @keyframes glow { 0%,100%{box-shadow:0 0 0 4px rgba(108,77,230,0.2)} 50%{box-shadow:0 0 0 6px rgba(108,77,230,0.1)} }
+
+    .timeline-dot.upcoming {
+      background: rgba(255,255,255,0.04);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      color: var(--gray2);
+    }
+
+    .timeline-label { font-size: 10.5px; color: var(--gray); text-align: center; white-space: nowrap; }
+    .timeline-label.current { color: var(--white); font-weight: 600; }
+
+    .timeline-connector {
+      flex: 1;
+      height: 1px;
+      margin-top: -18px;
+      position: relative;
+      z-index: 0;
+    }
+    .timeline-connector.done { background: rgba(0,212,170,0.3); }
+    .timeline-connector.pending { background: var(--border2); }
+
+    /* Study card footer */
+    .study-card-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0,0,0,0.12);
+    }
+
+    .study-card-footer-left { display: flex; align-items: center; gap: 14px; }
+
+    .footer-stat { font-size: 12px; color: var(--gray); display: flex; align-items: center; gap: 5px; }
+    .footer-stat strong { color: var(--white); font-weight: 600; }
+    .footer-stat svg { width: 13px; height: 13px; stroke: var(--gray2); fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .progress-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .progress-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; min-width: 80px; }
+    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--violet), var(--cyan)); }
+    .progress-pct { font-size: 11.5px; color: var(--gray); }
+
+    .btn-respond {
+      background: linear-gradient(135deg, var(--violet), #5A3BD4);
+      border: none; color: #fff;
+      padding: 8px 18px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      display: flex; align-items: center; gap: 7px;
+      box-shadow: 0 3px 12px rgba(108,77,230,0.3);
+      transition: all 0.2s;
+    }
+    .btn-respond:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(108,77,230,0.45); }
+    .btn-respond svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .btn-respond.completed {
+      background: rgba(74,139,245,0.1);
+      border: 1px solid rgba(74,139,245,0.2);
+      color: #4A8BF5;
+      box-shadow: none;
+    }
+    .btn-respond.completed:hover { background: rgba(74,139,245,0.15); transform: none; }
+
+    /* ─── HISTORY ─── */
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .history-item {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: background 0.15s;
+    }
+    .history-item:hover { background: rgba(13,22,40,0.9); }
+
+    .history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .history-info { flex: 1; min-width: 0; }
+    .history-title { font-size: 13px; font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-meta  { font-size: 11.5px; color: var(--gray); margin-top: 2px; }
+    .history-time  { font-size: 11.5px; color: var(--gray2); flex-shrink: 0; }
+
+    /* ─── QUESTIONNAIRE MODAL ─── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(8,15,30,0.92); backdrop-filter: blur(10px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .questionnaire-modal {
+      background: var(--bg2);
+      border: 1px solid rgba(108,77,230,0.25);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(14px);
+      transition: transform 0.25s;
+    }
+    .modal-overlay.open .questionnaire-modal { transform: translateY(0); }
+
+    .q-modal-header {
+      padding: 22px 26px 18px;
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0;
+    }
+
+    .q-modal-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .q-modal-study { font-size: 11px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 20px; line-height: 1; transition: color 0.2s; }
+    .modal-close:hover { color: var(--white); }
+
+    .q-modal-title { font-size: 16px; font-weight: 800; color: var(--white); margin-bottom: 4px; }
+    .q-modal-phase { font-size: 12.5px; color: var(--cyan); font-weight: 600; }
+
+    /* Progress in modal */
+    .q-progress-row { display: flex; align-items: center; gap: 10px; }
+    .q-progress-track { flex: 1; height: 3px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+    .q-progress-fill { height: 100%; background: linear-gradient(90deg, var(--violet), var(--cyan)); border-radius: 3px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+    .q-progress-label { font-size: 11.5px; color: var(--gray); white-space: nowrap; }
+
+    /* Question body */
+    .q-modal-body { flex: 1; overflow-y: auto; padding: 24px 26px; }
+
+    .q-number { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--violet2); margin-bottom: 8px; }
+    .q-text { font-size: 16px; font-weight: 700; color: var(--white); line-height: 1.4; margin-bottom: 20px; }
+
+    /* Scale */
+    .scale-group { display: flex; flex-direction: column; gap: 10px; }
+    .scale-row { display: flex; gap: 6px; }
+    .scale-btn { flex: 1; height: 40px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--gray); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+    .scale-btn:hover { border-color: rgba(108,77,230,0.4); color: var(--white); }
+    .scale-btn.sel { border-color: var(--violet); background: rgba(108,77,230,0.18); color: var(--white); box-shadow: 0 2px 10px rgba(108,77,230,0.2); }
+    .scale-extremes { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray2); padding: 0 2px; }
+
+    /* Boolean */
+    .bool-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .bool-btn { padding: 14px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--gray); font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; text-align: center; }
+    .bool-btn:hover { border-color: rgba(108,77,230,0.4); color: var(--white); }
+    .bool-btn.sel { border-color: var(--violet); background: rgba(108,77,230,0.15); color: var(--white); }
+
+    /* Number */
+    .num-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--white); padding: 14px; border-radius: 10px; font-size: 22px; font-weight: 700; font-family: 'Inter', sans-serif; outline: none; transition: all 0.2s; text-align: center; }
+    .num-input:focus { border-color: var(--violet); background: rgba(108,77,230,0.06); box-shadow: 0 0 0 3px rgba(108,77,230,0.12); }
+    .num-input::placeholder { color: rgba(138,150,176,0.3); font-size: 16px; font-weight: 400; }
+
+    /* Modal footer */
+    .q-modal-footer { padding: 16px 26px; border-top: 1px solid var(--border2); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; background: rgba(0,0,0,0.15); }
+    .q-back { background: none; border: none; color: var(--gray); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 6px; padding: 8px 0; transition: color 0.2s; }
+    .q-back:hover { color: var(--white); }
+    .q-back svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .q-next { background: linear-gradient(135deg, var(--violet), #5A3BD4); border: none; color: #fff; padding: 11px 24px; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(108,77,230,0.3); transition: all 0.25s; }
+    .q-next:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(108,77,230,0.45); }
+    .q-next svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .q-next.finish { background: linear-gradient(135deg, var(--cyan), #00B895); color: #000; font-weight: 700; }
+
+    /* Done screen in modal */
+    .q-done { text-align: center; padding: 40px 20px; }
+    .q-done-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(0,212,170,0.12); border: 2px solid rgba(0,212,170,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .q-done-icon svg { width: 28px; height: 28px; stroke: var(--cyan); fill: none; stroke-width: 2.5; stroke-linecap: round; }
+    .q-done-title { font-size: 20px; font-weight: 800; color: var(--white); margin-bottom: 8px; }
+    .q-done-sub { font-size: 14px; color: var(--gray); line-height: 1.65; margin-bottom: 24px; }
+    .q-done-next { background: rgba(255,255,255,0.04); border: 1px solid var(--border2); border-radius: 10px; padding: 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; text-align: left; }
+    .q-done-next-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(108,77,230,0.12); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .q-done-next-icon svg { width: 16px; height: 16px; stroke: var(--violet2); fill: none; stroke-width: 2; stroke-linecap: round; }
+    .q-done-next-label { font-size: 12px; color: var(--gray); margin-bottom: 2px; }
+    .q-done-next-val { font-size: 13.5px; font-weight: 600; color: var(--white); }
+    .btn-close-done { background: linear-gradient(135deg, var(--violet), #5A3BD4); border: none; color: #fff; padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; width: 100%; }
+    .btn-close-done:hover { opacity: 0.9; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">E</div>
+        <span class="logo-text">Empiri<span>a</span></span>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar">AG</div>
+        <div style="flex:1;min-width:0">
+          <div class="user-name">Ana García López</div>
+          <div class="user-role">Participante</div>
+        </div>
+        <div class="chev"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section-label">Mis estudios</div>
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Panel principal
+        <span class="nav-badge pending">1</span>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        Estudios activos
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Mis respuestas
+      </div>
+      <div class="nav-section-label">Cuenta</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+        Perfil
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="nav-item danger">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Cerrar sesión
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main">
+
+    <div class="topbar">
+      <span class="topbar-title">Panel principal</span>
+      <div class="topbar-right">
+        <button class="btn ghost">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <button class="btn ghost">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+          Mi perfil
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Greeting -->
+      <div class="greeting">
+        <div class="greeting-title">Hola, Ana</div>
+        <div class="greeting-sub">Tienes cuestionarios pendientes de completar</div>
+      </div>
+
+      <!-- Pending alert -->
+      <div class="pending-alert" onclick="openQuestionnaire()">
+        <div class="pending-alert-left">
+          <div class="pending-icon">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div>
+            <div class="pending-title">Cuestionario pendiente — Fase Pretest</div>
+            <div class="pending-desc">Efecto del ejercicio físico en la atención sostenida · 3 preguntas · menos de 2 min</div>
+          </div>
+        </div>
+        <div class="pending-arrow">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
+      <!-- Active studies -->
+      <div class="section-head">
+        <div class="section-title">Estudios en los que participas</div>
+      </div>
+
+      <div class="studies-list">
+
+        <!-- Study 1: active with pending questionnaire -->
+        <div class="study-card">
+          <div class="study-card-header">
+            <div class="study-card-left">
+              <div class="study-meta">
+                <span class="study-status active">Activo</span>
+                <span class="study-design">Pretest–Postest</span>
+              </div>
+              <div class="study-name">Efecto del ejercicio físico en la atención sostenida</div>
+              <div class="study-researcher">Dr. Francisco Hermoso · Universidad de Granada</div>
+            </div>
+          </div>
+
+          <!-- Phase timeline -->
+          <div class="study-timeline">
+            <div class="timeline-phase">
+              <div class="timeline-phase-inner">
+                <div class="timeline-dot current">1</div>
+                <span class="timeline-label current">Pretest</span>
+              </div>
+            </div>
+            <div class="timeline-connector pending"></div>
+            <div class="timeline-phase">
+              <div class="timeline-phase-inner">
+                <div class="timeline-dot upcoming">2</div>
+                <span class="timeline-label">Intervención</span>
+              </div>
+            </div>
+            <div class="timeline-connector pending"></div>
+            <div class="timeline-phase">
+              <div class="timeline-phase-inner">
+                <div class="timeline-dot upcoming">3</div>
+                <span class="timeline-label">Postest</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="study-card-footer">
+            <div class="study-card-footer-left">
+              <div class="footer-stat">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Hasta <strong>30 sep 2026</strong>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+                <span class="progress-pct">0 / 3 fases</span>
+              </div>
+            </div>
+            <button class="btn-respond" onclick="openQuestionnaire()">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Responder ahora
+            </button>
+          </div>
+        </div>
+
+        <!-- Study 2: completed -->
+        <div class="study-card">
+          <div class="study-card-header">
+            <div class="study-card-left">
+              <div class="study-meta">
+                <span class="study-status finished">Completado</span>
+                <span class="study-design">Longitudinal</span>
+              </div>
+              <div class="study-name">Hábitos de sueño y rendimiento académico en universitarios</div>
+              <div class="study-researcher">Dra. Carmen Vidal · Universidad Autónoma de Madrid</div>
+            </div>
+          </div>
+
+          <div class="study-timeline">
+            <div class="timeline-phase">
+              <div class="timeline-phase-inner">
+                <div class="timeline-dot done"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <span class="timeline-label">Fase 1</span>
+              </div>
+            </div>
+            <div class="timeline-connector done"></div>
+            <div class="timeline-phase">
+              <div class="timeline-phase-inner">
+                <div class="timeline-dot done"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <span class="timeline-label">Fase 2</span>
+              </div>
+            </div>
+            <div class="timeline-connector done"></div>
+            <div class="timeline-phase">
+              <div class="timeline-phase-inner">
+                <div class="timeline-dot done"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <span class="timeline-label">Fase 3</span>
+              </div>
+            </div>
+            <div class="timeline-connector done"></div>
+            <div class="timeline-phase">
+              <div class="timeline-phase-inner">
+                <div class="timeline-dot done"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <span class="timeline-label">Fase 4</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="study-card-footer">
+            <div class="study-card-footer-left">
+              <div class="footer-stat">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Finalizado en <strong>dic 2025</strong>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+                <span class="progress-pct">4 / 4 fases</span>
+              </div>
+            </div>
+            <button class="btn-respond completed">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Completado
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent activity -->
+      <div class="section-head">
+        <div class="section-title">Actividad reciente</div>
+      </div>
+
+      <div class="history-list">
+        <div class="history-item">
+          <div class="history-dot" style="background:var(--cyan)"></div>
+          <div class="history-info">
+            <div class="history-title">Inscripción confirmada en el estudio de ejercicio físico</div>
+            <div class="history-meta">Efecto del ejercicio físico en la atención sostenida</div>
+          </div>
+          <div class="history-time">Hoy</div>
+        </div>
+        <div class="history-item">
+          <div class="history-dot" style="background:var(--violet2)"></div>
+          <div class="history-info">
+            <div class="history-title">Fase 4 completada — Seguimiento final</div>
+            <div class="history-meta">Hábitos de sueño y rendimiento académico</div>
+          </div>
+          <div class="history-time">12 dic 2025</div>
+        </div>
+        <div class="history-item">
+          <div class="history-dot" style="background:var(--violet2)"></div>
+          <div class="history-info">
+            <div class="history-title">Fase 3 completada — Medición intermedia</div>
+            <div class="history-meta">Hábitos de sueño y rendimiento académico</div>
+          </div>
+          <div class="history-time">3 nov 2025</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─── QUESTIONNAIRE MODAL ─── -->
+<div class="modal-overlay" id="modal" onclick="closeOverlay(event)">
+  <div class="questionnaire-modal">
+
+    <div class="q-modal-header">
+      <div class="q-modal-top">
+        <span class="q-modal-study">Efecto del ejercicio físico en la atención sostenida</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="q-modal-title" id="q-title">Fase Pretest — Cuestionario</div>
+      <div class="q-modal-phase" id="q-phase">Pregunta 1 de 3</div>
+      <div style="margin-top:12px">
+        <div class="q-progress-row">
+          <div class="q-progress-track"><div class="q-progress-fill" id="q-bar" style="width:33%"></div></div>
+          <span class="q-progress-label" id="q-pct">1 / 3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q1 -->
+    <div class="q-modal-body" id="q-panel-1">
+      <div class="q-number">Pregunta 1</div>
+      <div class="q-text">¿Cuántas horas duermes de media por noche?</div>
+      <input class="num-input" type="number" min="0" max="24" placeholder="Introduce un número" />
+    </div>
+
+    <!-- Q2 -->
+    <div class="q-modal-body" id="q-panel-2" style="display:none">
+      <div class="q-number">Pregunta 2</div>
+      <div class="q-text">Valora tu nivel de concentración durante el día</div>
+      <div class="scale-group">
+        <div class="scale-row">
+          <button class="scale-btn" onclick="selScale(this)">1</button>
+          <button class="scale-btn" onclick="selScale(this)">2</button>
+          <button class="scale-btn" onclick="selScale(this)">3</button>
+          <button class="scale-btn" onclick="selScale(this)">4</button>
+          <button class="scale-btn" onclick="selScale(this)">5</button>
+          <button class="scale-btn sel" onclick="selScale(this)">6</button>
+          <button class="scale-btn" onclick="selScale(this)">7</button>
+          <button class="scale-btn" onclick="selScale(this)">8</button>
+          <button class="scale-btn" onclick="selScale(this)">9</button>
+          <button class="scale-btn" onclick="selScale(this)">10</button>
+        </div>
+        <div class="scale-extremes"><span>Muy bajo</span><span>Muy alto</span></div>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="q-modal-body" id="q-panel-3" style="display:none">
+      <div class="q-number">Pregunta 3</div>
+      <div class="q-text">¿Has realizado actividad física esta semana?</div>
+      <div class="bool-group">
+        <button class="bool-btn" onclick="selBool(this)">Sí</button>
+        <button class="bool-btn" onclick="selBool(this)">No</button>
+      </div>
+    </div>
+
+    <!-- Done -->
+    <div class="q-modal-body" id="q-panel-done" style="display:none">
+      <div class="q-done">
+        <div class="q-done-icon">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="q-done-title">Respuestas enviadas</div>
+        <div class="q-done-sub">Has completado el cuestionario de la fase Pretest. El investigador podrá consultar tus respuestas.</div>
+        <div class="q-done-next">
+          <div class="q-done-next-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div>
+            <div class="q-done-next-label">Próxima fase</div>
+            <div class="q-done-next-val">Intervención — disponible desde el 26 abr 2026</div>
+          </div>
+        </div>
+        <button class="btn-close-done" onclick="closeModal()">Volver a mi panel</button>
+      </div>
+    </div>
+
+    <div class="q-modal-footer" id="q-footer">
+      <button class="q-back" id="q-back-btn" onclick="qPrev()" style="visibility:hidden">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Anterior
+      </button>
+      <button class="q-next" id="q-next-btn" onclick="qNext()">
+        Siguiente
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+let qCurrent = 1;
+const qTotal = 3;
+
+function openQuestionnaire() {
+  qCurrent = 1;
+  updateQ();
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+  qCurrent = 1;
+}
+
+function closeOverlay(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function qNext() {
+  if (qCurrent < qTotal) { qCurrent++; updateQ(); }
+  else { showQDone(); }
+}
+
+function qPrev() {
+  if (qCurrent > 1) { qCurrent--; updateQ(); }
+}
+
+function updateQ() {
+  for (let i = 1; i <= qTotal; i++) {
+    document.getElementById('q-panel-' + i).style.display = i === qCurrent ? 'block' : 'none';
+  }
+  document.getElementById('q-panel-done').style.display = 'none';
+  document.getElementById('q-footer').style.display = 'flex';
+  document.getElementById('q-phase').textContent  = `Pregunta ${qCurrent} de ${qTotal}`;
+  document.getElementById('q-pct').textContent    = `${qCurrent} / ${qTotal}`;
+  document.getElementById('q-bar').style.width    = `${(qCurrent / qTotal) * 100}%`;
+  document.getElementById('q-back-btn').style.visibility = qCurrent > 1 ? 'visible' : 'hidden';
+  const nextBtn = document.getElementById('q-next-btn');
+  if (qCurrent === qTotal) {
+    nextBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><polyline points="20 6 9 17 4 12"/></svg> Enviar respuestas';
+    nextBtn.classList.add('finish');
+  } else {
+    nextBtn.innerHTML = 'Siguiente <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><polyline points="9 18 15 12 9 6"/></svg>';
+    nextBtn.classList.remove('finish');
+  }
+}
+
+function showQDone() {
+  for (let i = 1; i <= qTotal; i++) document.getElementById('q-panel-' + i).style.display = 'none';
+  document.getElementById('q-panel-done').style.display = 'block';
+  document.getElementById('q-footer').style.display = 'none';
+  document.getElementById('q-bar').style.width = '100%';
+  document.getElementById('q-pct').textContent = `${qTotal} / ${qTotal}`;
+  document.getElementById('q-phase').textContent = 'Completado';
+}
+
+function selScale(btn) { btn.closest('.scale-row').querySelectorAll('.scale-btn').forEach(b => b.classList.remove('sel')); btn.classList.add('sel'); }
+function selBool(btn)  { btn.closest('.bool-group').querySelectorAll('.bool-btn').forEach(b => b.classList.remove('sel')); btn.classList.add('sel'); }
+</script>
+
+</body>
+</html>

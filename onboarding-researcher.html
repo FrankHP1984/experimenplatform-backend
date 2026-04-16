@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empiria — Bienvenido</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080F1E;
+      --bg2:     #0D1628;
+      --bg3:     #111D35;
+      --violet:  #6C4DE6;
+      --violet2: #8B6FF0;
+      --cyan:    #00D4AA;
+      --white:   #F0F4FF;
+      --gray:    #8A96B0;
+      --border:  rgba(108,77,230,0.18);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    /* ─── CANVAS ─── */
+    #canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.25;
+    }
+
+    /* ─── LAYOUT ─── */
+    .layout {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+    }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 56px;
+    }
+
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -1px;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span { color: var(--cyan); }
+
+    /* Steps list */
+    .steps-nav { flex: 1; }
+
+    .steps-nav-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--gray);
+      margin-bottom: 28px;
+    }
+
+    .step-nav-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 8px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      transition: background 0.2s;
+      cursor: default;
+      position: relative;
+    }
+
+    .step-nav-item.active {
+      background: rgba(108,77,230,0.1);
+    }
+
+    .step-nav-connector {
+      position: absolute;
+      left: 33px;
+      top: 52px;
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    .step-indicator {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .step-indicator.pending {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--gray);
+    }
+
+    .step-indicator.active {
+      background: linear-gradient(135deg, var(--violet), #5A3BD4);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(108,77,230,0.4);
+    }
+
+    .step-indicator.done {
+      background: rgba(0,212,170,0.15);
+      border: 1px solid rgba(0,212,170,0.3);
+      color: var(--cyan);
+      font-size: 14px;
+    }
+
+    .step-nav-info { flex: 1; padding-top: 3px; }
+
+    .step-nav-label {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--gray);
+      line-height: 1;
+      margin-bottom: 3px;
+      transition: color 0.2s;
+    }
+
+    .step-nav-item.active .step-nav-label { color: var(--white); }
+    .step-nav-item.done .step-nav-label   { color: var(--gray); }
+
+    .step-nav-desc {
+      font-size: 12px;
+      color: rgba(138,150,176,0.6);
+      line-height: 1.4;
+    }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+
+    .sidebar-footer p {
+      font-size: 12px;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    .sidebar-footer a {
+      color: var(--violet2);
+      text-decoration: none;
+    }
+
+    /* ─── MAIN CONTENT ─── */
+    .main {
+      padding: 0 80px;
+      display: flex;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .step-content {
+      width: 100%;
+      max-width: 520px;
+      display: none;
+      animation: fadeUp 0.4s ease;
+    }
+
+    .step-content.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Step header */
+    .step-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--violet2);
+      margin-bottom: 12px;
+    }
+
+    .step-title {
+      font-size: clamp(26px, 3.5vw, 36px);
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+
+    .step-title .highlight {
+      background: linear-gradient(90deg, var(--violet2), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .step-subtitle {
+      font-size: 15px;
+      color: var(--gray);
+      line-height: 1.65;
+      margin-bottom: 36px;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 20px; }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .form-label span {
+      font-weight: 400;
+      color: var(--gray);
+      font-size: 12px;
+      margin-left: 4px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--white);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--violet);
+      background: rgba(108,77,230,0.06);
+      box-shadow: 0 0 0 3px rgba(108,77,230,0.12);
+    }
+
+    .form-input::placeholder { color: rgba(138,150,176,0.5); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    select.form-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A96B0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      cursor: pointer;
+    }
+
+    select.form-input option { background: var(--bg2); }
+
+    /* Option cards */
+    .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .option-card {
+      background: rgba(255,255,255,0.03);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 18px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-card:hover {
+      border-color: rgba(108,77,230,0.4);
+      background: rgba(108,77,230,0.05);
+    }
+
+    .option-card.selected {
+      border-color: var(--violet);
+      background: rgba(108,77,230,0.1);
+      box-shadow: 0 0 0 3px rgba(108,77,230,0.12);
+    }
+
+    .option-card-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: rgba(108,77,230,0.15);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .option-card-icon svg { width: 18px; height: 18px; stroke: var(--violet2); fill: none; stroke-width: 1.8; stroke-linecap: round; }
+
+    .option-card.selected .option-card-icon { background: rgba(108,77,230,0.25); }
+
+    .option-card-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+
+    .option-card-desc {
+      font-size: 12px;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    /* Design type cards */
+    .design-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+
+    .design-card {
+      background: rgba(255,255,255,0.03);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .design-card:hover { border-color: rgba(108,77,230,0.4); background: rgba(108,77,230,0.05); }
+
+    .design-card.selected {
+      border-color: var(--violet);
+      background: rgba(108,77,230,0.1);
+    }
+
+    .design-card-dot {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .design-card.selected .design-card-dot {
+      border-color: var(--violet);
+      background: var(--violet);
+      box-shadow: 0 0 0 3px rgba(108,77,230,0.2);
+    }
+
+    .design-card.selected .design-card-dot::after {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .design-card-info { flex: 1; }
+
+    .design-card-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 3px;
+    }
+
+    .design-card-desc {
+      font-size: 12.5px;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    /* Summary */
+    .summary-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13.5px;
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+
+    .summary-key { color: var(--gray); }
+    .summary-val { color: var(--white); font-weight: 500; }
+    .summary-val.accent { color: var(--cyan); }
+
+    .checklist { margin-bottom: 28px; }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      font-size: 14px;
+      color: var(--white);
+    }
+
+    .check-box {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      background: rgba(0,212,170,0.15);
+      border: 1px solid rgba(0,212,170,0.3);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .check-box svg { width: 11px; height: 11px; stroke: var(--cyan); fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+    /* Buttons */
+    .btn-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 32px;
+    }
+
+    .btn-back {
+      background: none;
+      border: none;
+      color: var(--gray);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 0;
+      transition: color 0.2s;
+    }
+    .btn-back:hover { color: var(--white); }
+    .btn-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .btn-next {
+      background: linear-gradient(135deg, var(--violet), #5A3BD4);
+      border: none;
+      color: #fff;
+      padding: 13px 28px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(108,77,230,0.35);
+      transition: all 0.25s;
+    }
+    .btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(108,77,230,0.5); }
+    .btn-next svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .btn-skip {
+      background: none;
+      border: none;
+      color: var(--gray);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      padding: 8px 0;
+      transition: color 0.2s;
+    }
+    .btn-skip:hover { color: var(--white); }
+
+    .btn-finish {
+      background: linear-gradient(135deg, var(--cyan), #00B895);
+      border: none;
+      color: #000;
+      padding: 13px 28px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0,212,170,0.3);
+      transition: all 0.25s;
+    }
+    .btn-finish:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(0,212,170,0.45); }
+    .btn-finish svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+    /* Progress bar top */
+    .progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+      z-index: 100;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* Step 1 welcome visual */
+    .welcome-visual {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 28px;
+    }
+
+    .welcome-visual-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .welcome-name { font-size: 15px; font-weight: 700; color: var(--white); }
+    .welcome-role { font-size: 12px; color: var(--cyan); font-weight: 500; }
+
+    .welcome-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .welcome-stat {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .welcome-stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .welcome-stat-label { font-size: 10px; color: var(--gray); margin-top: 3px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<div class="progress-bar" id="progress-bar" style="width: 25%"></div>
+
+<div class="layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">E</div>
+      <span class="logo-text">Empiri<span>a</span></span>
+    </div>
+
+    <div class="steps-nav">
+      <p class="steps-nav-title">Configuración inicial</p>
+
+      <div class="step-nav-item active" id="nav-1">
+        <div class="step-indicator active" id="ind-1">1</div>
+        <div class="step-nav-info">
+          <div class="step-nav-label">Bienvenida</div>
+          <div class="step-nav-desc">Confirma tu cuenta e información básica</div>
+        </div>
+        <div class="step-nav-connector"></div>
+      </div>
+
+      <div class="step-nav-item" id="nav-2">
+        <div class="step-indicator pending" id="ind-2">2</div>
+        <div class="step-nav-info">
+          <div class="step-nav-label">Tu perfil investigador</div>
+          <div class="step-nav-desc">Institución, área y rol de investigación</div>
+        </div>
+        <div class="step-nav-connector"></div>
+      </div>
+
+      <div class="step-nav-item" id="nav-3">
+        <div class="step-indicator pending" id="ind-3">3</div>
+        <div class="step-nav-info">
+          <div class="step-nav-label">Primer experimento</div>
+          <div class="step-nav-desc">Configura las bases de tu primer estudio</div>
+        </div>
+        <div class="step-nav-connector"></div>
+      </div>
+
+      <div class="step-nav-item" id="nav-4">
+        <div class="step-indicator pending" id="ind-4">4</div>
+        <div class="step-nav-info">
+          <div class="step-nav-label">Listo para investigar</div>
+          <div class="step-nav-desc">Revisa y accede a tu panel</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <p>¿Tienes dudas? Consulta nuestra <a href="#">documentación</a> o escríbenos a <a href="#">hola@empiria.io</a></p>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <main class="main">
+
+    <!-- STEP 1 — Bienvenida -->
+    <div class="step-content active" id="step-1">
+      <div class="step-tag">Paso 1 de 4</div>
+      <h1 class="step-title">Bienvenido a<br/><span class="highlight">Empiria</span></h1>
+      <p class="step-subtitle">Tu cuenta ha sido creada correctamente. En los próximos minutos configuraremos tu perfil y dejarás tu primer experimento listo para funcionar.</p>
+
+      <div class="welcome-visual">
+        <div class="welcome-visual-header">
+          <div class="avatar">FH</div>
+          <div>
+            <div class="welcome-name">Dr. Francisco Hermoso</div>
+            <div class="welcome-role">Investigador — Plan Starter</div>
+          </div>
+        </div>
+        <div class="welcome-stats">
+          <div class="welcome-stat">
+            <div class="welcome-stat-value">0</div>
+            <div class="welcome-stat-label">Experimentos</div>
+          </div>
+          <div class="welcome-stat">
+            <div class="welcome-stat-value">0</div>
+            <div class="welcome-stat-label">Participantes</div>
+          </div>
+          <div class="welcome-stat">
+            <div class="welcome-stat-value" style="color:var(--cyan)">3</div>
+            <div class="welcome-stat-label">Disponibles</div>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size:13px;color:var(--gray);margin-bottom:20px;">Este proceso tarda menos de 3 minutos. Puedes saltarte los pasos opcionales y completarlos más tarde desde tu perfil.</p>
+
+      <div class="btn-actions" style="justify-content: flex-end;">
+        <button class="btn-next" onclick="goTo(2)">
+          Comenzar configuración
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2 — Perfil investigador -->
+    <div class="step-content" id="step-2">
+      <div class="step-tag">Paso 2 de 4</div>
+      <h1 class="step-title">Tu perfil<br/>investigador</h1>
+      <p class="step-subtitle">Esta información nos ayuda a contextualizar tu actividad en la plataforma. Todos los campos son opcionales.</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre <span>(ya rellenado)</span></label>
+          <input class="form-input" type="text" value="Francisco Hermoso" readonly style="opacity:0.6;cursor:not-allowed" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email <span>(ya rellenado)</span></label>
+          <input class="form-input" type="email" value="fhermosopulido@gmail.com" readonly style="opacity:0.6;cursor:not-allowed" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Institución o universidad <span>(opcional)</span></label>
+        <input class="form-input" type="text" placeholder="Universidad de Granada, CSIC, UAM..." />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Área de investigación <span>(opcional)</span></label>
+          <select class="form-input">
+            <option value="">Selecciona...</option>
+            <option>Psicología</option>
+            <option>Neurociencia</option>
+            <option>Educación</option>
+            <option>Salud y medicina</option>
+            <option>Ciencias del deporte</option>
+            <option>Ciencias sociales</option>
+            <option>Otra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rol <span>(opcional)</span></label>
+          <select class="form-input">
+            <option value="">Selecciona...</option>
+            <option>Investigador principal</option>
+            <option>Investigador colaborador</option>
+            <option>Docente investigador</option>
+            <option>Estudiante de doctorado</option>
+            <option>Estudiante de máster</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Breve descripción de tu investigación <span>(opcional)</span></label>
+        <textarea class="form-input" rows="3" placeholder="Cuéntanos en qué tipo de estudios sueles trabajar..." style="resize:none"></textarea>
+      </div>
+
+      <div class="btn-actions">
+        <button class="btn-back" onclick="goTo(1)">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver
+        </button>
+        <div style="display:flex;align-items:center;gap:16px">
+          <button class="btn-skip" onclick="goTo(3)">Saltar este paso</button>
+          <button class="btn-next" onclick="goTo(3)">
+            Continuar
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 — Primer experimento -->
+    <div class="step-content" id="step-3">
+      <div class="step-tag">Paso 3 de 4</div>
+      <h1 class="step-title">Crea tu<br/>primer experimento</h1>
+      <p class="step-subtitle">Define los datos básicos de tu primer estudio. Podrás añadir fases, grupos y preguntas desde el panel principal.</p>
+
+      <div class="form-group">
+        <label class="form-label">Título del experimento</label>
+        <input class="form-input" type="text" placeholder="Ej: Efecto del ejercicio físico en la atención sostenida" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tipo de diseño experimental</label>
+        <div class="design-grid">
+          <div class="design-card selected" onclick="selectDesign(this)">
+            <div class="design-card-dot"></div>
+            <div class="design-card-info">
+              <div class="design-card-label">Pretest — Postest</div>
+              <div class="design-card-desc">Medición antes y después de la intervención sobre el mismo grupo de participantes.</div>
+            </div>
+          </div>
+          <div class="design-card" onclick="selectDesign(this)">
+            <div class="design-card-dot"></div>
+            <div class="design-card-info">
+              <div class="design-card-label">Entre sujetos</div>
+              <div class="design-card-desc">Comparación entre un grupo control y uno o más grupos experimentales.</div>
+            </div>
+          </div>
+          <div class="design-card" onclick="selectDesign(this)">
+            <div class="design-card-dot"></div>
+            <div class="design-card-info">
+              <div class="design-card-label">Longitudinal</div>
+              <div class="design-card-desc">Seguimiento de los mismos participantes a lo largo del tiempo en múltiples fases.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha de inicio <span>(estimada)</span></label>
+          <input class="form-input" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de fin <span>(estimada)</span></label>
+          <input class="form-input" type="date" />
+        </div>
+      </div>
+
+      <div class="btn-actions">
+        <button class="btn-back" onclick="goTo(2)">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Volver
+        </button>
+        <div style="display:flex;align-items:center;gap:16px">
+          <button class="btn-skip" onclick="goTo(4)">Saltar, lo haré después</button>
+          <button class="btn-next" onclick="goTo(4)">
+            Continuar
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 — Listo -->
+    <div class="step-content" id="step-4">
+      <div class="step-tag">Paso 4 de 4</div>
+      <h1 class="step-title">Todo listo.<br/><span class="highlight">Empieza a investigar.</span></h1>
+      <p class="step-subtitle">Tu cuenta está configurada. Esto es lo que tienes preparado para comenzar.</p>
+
+      <div class="summary-card">
+        <div class="summary-row">
+          <span class="summary-key">Cuenta</span>
+          <span class="summary-val">fhermosopulido@gmail.com</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Plan</span>
+          <span class="summary-val accent">Starter — Gratuito</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Primer experimento</span>
+          <span class="summary-val">Efecto del ejercicio físico...</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Estado del experimento</span>
+          <span class="summary-val">Borrador — listo para configurar</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-key">Experimentos disponibles</span>
+          <span class="summary-val accent">3 de 3 restantes</span>
+        </div>
+      </div>
+
+      <div class="checklist">
+        <div class="check-item">
+          <div class="check-box">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          Cuenta verificada y activa
+        </div>
+        <div class="check-item">
+          <div class="check-box">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          Perfil de investigador creado
+        </div>
+        <div class="check-item">
+          <div class="check-box">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          Primer experimento en borrador
+        </div>
+        <div class="check-item" style="opacity:0.45">
+          <div class="check-box" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1)">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <span style="color:var(--gray)">Configurar fases y preguntas — pendiente</span>
+        </div>
+        <div class="check-item" style="opacity:0.45">
+          <div class="check-box" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1)">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <span style="color:var(--gray)">Invitar primeros participantes — pendiente</span>
+        </div>
+      </div>
+
+      <div class="btn-actions" style="justify-content:flex-end">
+        <button class="btn-finish" onclick="alert('Redirigiendo al panel principal...')">
+          Ir a mi panel
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ─── PARTICLE NETWORK ───────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let W, H;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+function initP() {
+  particles = [];
+  for (let i = 0; i < 60; i++) particles.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-0.5)*0.25, vy: (Math.random()-0.5)*0.25, r: Math.random()*1.8+0.8 });
+}
+initP();
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(108,77,230,0.6)'; ctx.fill();
+  });
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i+1; j < particles.length; j++) {
+      const dx = particles[i].x-particles[j].x, dy = particles[i].y-particles[j].y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      if (d < 120) {
+        ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle = `rgba(0,212,170,${(1-d/120)*0.25})`; ctx.lineWidth = 0.6; ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(draw);
+}
+draw();
+
+// ─── NAVIGATION ─────────────────────────────────────────────────────────────
+let current = 1;
+const totalSteps = 4;
+const progressWidths = ['25%', '50%', '75%', '100%'];
+
+function goTo(step) {
+  document.getElementById('step-' + current).classList.remove('active');
+  document.getElementById('nav-' + current).classList.remove('active');
+
+  // Mark previous as done
+  if (step > current) {
+    document.getElementById('ind-' + current).className = 'step-indicator done';
+    document.getElementById('ind-' + current).textContent = '';
+    document.getElementById('ind-' + current).innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  }
+
+  current = step;
+  document.getElementById('step-' + current).classList.add('active');
+  document.getElementById('nav-'  + current).classList.add('active');
+  document.getElementById('ind-'  + current).className = 'step-indicator active';
+  document.getElementById('ind-'  + current).textContent = current;
+  document.getElementById('progress-bar').style.width = progressWidths[current - 1];
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── DESIGN SELECTION ───────────────────────────────────────────────────────
+function selectDesign(el) {
+  document.querySelectorAll('.design-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+</script>
+</body>
+</html>

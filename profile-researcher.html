@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empiria — Perfil del investigador</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:      #080F1E;
+      --surface: #0D1729;
+      --card:    #111E35;
+      --border:  rgba(255,255,255,0.07);
+      --violet:  #6C4DE6;
+      --violet-d:#5538CC;
+      --cyan:    #00D4AA;
+      --cyan-d:  #00B891;
+      --text:    #E8EEF8;
+      --muted:   #6B7A99;
+      --danger:  #E05C6B;
+      --warn:    #F0A500;
+      --success: #22C55E;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px; flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .sidebar-logo { padding: 24px 20px 20px; font-size: 20px; font-weight: 700; letter-spacing: -.5px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo span { color: var(--cyan); }
+    .sidebar-user { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--violet), #9370F0); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; }
+    .user-info { min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-plan { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .sidebar-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all .2s; text-decoration: none; }
+    .nav-item:hover { background: rgba(255,255,255,.04); color: var(--text); }
+    .nav-item.active { background: rgba(108,77,230,.15); color: var(--violet); }
+    .nav-badge { margin-left: auto; background: var(--violet); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+    .sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--border); }
+
+    /* ── MAIN ── */
+    .main-area { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .topbar { height: 60px; border-bottom: 1px solid var(--border); background: rgba(8,15,30,.85); backdrop-filter: blur(14px); position: sticky; top: 0; z-index: 50; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-title { font-size: 16px; font-weight: 600; }
+    .topbar-actions { display: flex; gap: 10px; }
+
+    /* buttons */
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; display: flex; align-items: center; gap: 7px; }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.04); }
+    .btn-primary { background: linear-gradient(135deg, var(--violet), var(--violet-d)); color: white; border: none; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; box-shadow: 0 4px 14px rgba(108,77,230,.3); display: flex; align-items: center; gap: 7px; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,77,230,.4); }
+    .btn-danger { background: transparent; border: 1px solid rgba(224,92,107,.3); color: var(--danger); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; }
+    .btn-danger:hover { border-color: var(--danger); background: rgba(224,92,107,.07); }
+
+    /* ── CONTENT ── */
+    .page-content { padding: 28px; display: grid; grid-template-columns: 1fr 320px; gap: 20px; max-width: 1100px; }
+
+    /* ── PROFILE TABS ── */
+    .profile-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .profile-tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .2s; }
+    .profile-tab.active { color: var(--violet); border-color: var(--violet); }
+    .profile-tab:hover:not(.active) { color: var(--text); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── CARDS ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 16px; }
+    .card:last-child { margin-bottom: 0; }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .card-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+    /* ── AVATAR SECTION ── */
+    .avatar-section { display: flex; align-items: center; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .big-avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--violet), #9370F0); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; color: white; flex-shrink: 0; position: relative; }
+    .avatar-edit-btn { position: absolute; bottom: 0; right: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; }
+    .avatar-edit-btn:hover { background: var(--violet); border-color: var(--violet); }
+    .avatar-info { }
+    .avatar-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .avatar-role { font-size: 13px; color: var(--muted); }
+    .avatar-actions { margin-left: auto; display: flex; gap: 8px; }
+
+    /* ── FORM ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid.single { grid-template-columns: 1fr; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+    .field input, .field select, .field textarea {
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; color: var(--text);
+      font-size: 14px; font-family: 'Inter', sans-serif; padding: 10px 14px; outline: none; transition: border-color .2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--violet); }
+    .field input::placeholder, .field textarea::placeholder { color: var(--muted); }
+    .field input[readonly] { opacity: .5; cursor: default; }
+    .field textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+    .field select option { background: var(--card); }
+    .field-hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+    /* ── RESEARCH AREAS TAGS ── */
+    .tags-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag { display: flex; align-items: center; gap: 6px; background: rgba(108,77,230,.12); border: 1px solid rgba(108,77,230,.25); color: #A78BF9; font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: all .2s; }
+    .tag:hover { background: rgba(108,77,230,.2); }
+    .tag svg { color: #A78BF9; }
+    .tag-add { background: rgba(255,255,255,.04); border: 1px dashed rgba(255,255,255,.15); color: var(--muted); font-size: 12px; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: all .2s; }
+    .tag-add:hover { border-color: var(--violet); color: var(--violet); }
+
+    /* ── SECURITY ── */
+    .security-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .security-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .sec-info { }
+    .sec-label { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+    .sec-sub { font-size: 12px; color: var(--muted); }
+    .sec-status { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+    .sec-ok  { color: var(--success); }
+    .sec-warn { color: var(--warn); }
+
+    /* ── DANGER ZONE ── */
+    .danger-zone { background: rgba(224,92,107,.05); border: 1px solid rgba(224,92,107,.15); border-radius: 14px; padding: 20px 24px; }
+    .danger-title { font-size: 14px; font-weight: 600; color: var(--danger); margin-bottom: 6px; }
+    .danger-text { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.55; }
+
+    /* ── RIGHT COLUMN ── */
+    .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Plan card */
+    .plan-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .plan-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+    .plan-badge { display: flex; align-items: center; gap: 8px; }
+    .plan-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, rgba(108,77,230,.3), rgba(0,212,170,.2)); display: flex; align-items: center; justify-content: center; }
+    .plan-name { font-size: 15px; font-weight: 700; }
+    .plan-price { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .plan-tag { font-size: 11px; font-weight: 700; background: linear-gradient(135deg, rgba(108,77,230,.2), rgba(0,212,170,.1)); border: 1px solid rgba(108,77,230,.3); color: #A78BF9; padding: 3px 10px; border-radius: 20px; letter-spacing: .3px; }
+
+    .plan-usage { margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .usage-item { }
+    .usage-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+    .usage-label { color: var(--muted); }
+    .usage-val { color: var(--text); font-weight: 500; }
+    .usage-bar { height: 5px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+    .usage-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+    .fill-violet { background: linear-gradient(90deg, var(--violet), #9370F0); }
+    .fill-cyan   { background: linear-gradient(90deg, var(--cyan), #00B891); }
+    .fill-warn   { background: linear-gradient(90deg, var(--warn), #E09500); }
+
+    .plan-renew { font-size: 12px; color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; gap: 5px; }
+
+    .btn-upgrade { width: 100%; background: linear-gradient(135deg, var(--violet), var(--cyan-d)); color: white; border: none; padding: 11px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; box-shadow: 0 4px 16px rgba(108,77,230,.25); }
+    .btn-upgrade:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,77,230,.4); }
+
+    /* Stats card */
+    .stats-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .stats-title { font-size: 12px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); font-weight: 600; margin-bottom: 16px; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 13px; }
+    .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .stat-label { color: var(--muted); }
+    .stat-val { font-weight: 600; color: var(--text); }
+
+    /* Integration card */
+    .integration-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .integration-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .int-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; font-weight: 700; }
+    .int-sb { background: rgba(62,207,142,.12); border: 1px solid rgba(62,207,142,.2); color: #3ECF8E; }
+    .int-orcid { background: rgba(166,206,57,.1); border: 1px solid rgba(166,206,57,.2); color: #A6CE39; }
+    .int-export { background: rgba(96,165,250,.1); border: 1px solid rgba(96,165,250,.2); color: #60A5FA; }
+    .int-info { flex: 1; min-width: 0; }
+    .int-name { font-size: 13px; font-weight: 500; }
+    .int-status { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .int-status.connected { color: var(--success); }
+    .int-btn { font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; background: transparent; font-family: 'Inter', sans-serif; transition: all .2s; white-space: nowrap; }
+    .int-btn:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--card); border: 1px solid rgba(0,212,170,.3); border-radius: 10px;
+      padding: 12px 20px; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 10px;
+      z-index: 200; transition: transform .35s cubic-bezier(.4,0,.2,1); box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+    .toast.visible { transform: translateX(-50%) translateY(0); }
+    .toast-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 440px; max-width: 94vw; padding: 28px; }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.55; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .modal .field { margin-bottom: 14px; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .page-content { grid-template-columns: 1fr; padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">Empiri<span>a</span></div>
+  <div class="sidebar-user">
+    <div class="user-avatar">CR</div>
+    <div class="user-info">
+      <div class="user-name">Carlos Romero</div>
+      <div class="user-plan">Plan Researcher</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="dashboard-researcher.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      Experimentos
+      <span class="nav-badge">1</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Participantes
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Respuestas
+    </a>
+    <a class="nav-item active" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Perfil
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Configuración
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="nav-item" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Cerrar sesión
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-area">
+  <div class="topbar">
+    <div class="topbar-title">Mi perfil</div>
+    <div class="topbar-actions">
+      <button class="btn-ghost" onclick="discardChanges()">Descartar cambios</button>
+      <button class="btn-primary" onclick="saveChanges()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar cambios
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- LEFT: MAIN PROFILE CONTENT -->
+    <div>
+      <div class="profile-tabs">
+        <div class="profile-tab active" onclick="switchTab('personal')">Datos personales</div>
+        <div class="profile-tab" onclick="switchTab('security')">Seguridad</div>
+        <div class="profile-tab" onclick="switchTab('notifications')">Notificaciones</div>
+      </div>
+
+      <!-- TAB: PERSONAL -->
+      <div class="tab-panel active" id="tab-personal">
+
+        <div class="card">
+          <!-- Avatar -->
+          <div class="avatar-section">
+            <div class="big-avatar">
+              CR
+              <div class="avatar-edit-btn" title="Cambiar foto">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </div>
+            </div>
+            <div class="avatar-info">
+              <div class="avatar-name">Carlos Romero Blanco</div>
+              <div class="avatar-role">Investigador · Plan Researcher</div>
+            </div>
+          </div>
+
+          <div class="card-title">Información básica</div>
+          <div class="card-sub">Estos datos aparecen en los estudios y son visibles para los participantes.</div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Nombre</label>
+              <input type="text" value="Carlos" />
+            </div>
+            <div class="field">
+              <label>Apellidos</label>
+              <input type="text" value="Romero Blanco" />
+            </div>
+            <div class="field full">
+              <label>Correo electrónico</label>
+              <input type="email" value="carlos.romero@universitat.edu" readonly />
+              <span class="field-hint">El correo está vinculado a tu cuenta y no puede modificarse aquí.</span>
+            </div>
+            <div class="field">
+              <label>Idioma de la plataforma</label>
+              <select>
+                <option selected>Español</option>
+                <option>English</option>
+                <option>Français</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Zona horaria</label>
+              <select>
+                <option selected>Europe/Madrid (UTC+2)</option>
+                <option>Europe/London (UTC+1)</option>
+                <option>America/New_York (UTC-4)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Información académica</div>
+          <div class="card-sub">Utilizada para generar el perfil de investigador visible en los formularios de invitación a participantes.</div>
+
+          <div class="form-grid">
+            <div class="field full">
+              <label>Institución o universidad</label>
+              <input type="text" value="Universitat de Barcelona" />
+            </div>
+            <div class="field">
+              <label>Departamento o facultad</label>
+              <input type="text" value="Dpto. de Psicología Experimental" />
+            </div>
+            <div class="field">
+              <label>Cargo o posición</label>
+              <input type="text" value="Investigador postdoctoral" />
+            </div>
+            <div class="field full">
+              <label>Breve bio (visible en estudios)</label>
+              <textarea>Investigador postdoctoral en el área de neurociencia cognitiva y psicología experimental. Interesado en el efecto del ejercicio físico sobre las funciones ejecutivas y el bienestar.</textarea>
+            </div>
+            <div class="field full">
+              <label>ORCID iD</label>
+              <input type="text" value="0000-0002-1234-5678" placeholder="Ej. 0000-0002-1234-5678" />
+              <span class="field-hint">Identificador único de investigador. Mejora la visibilidad de tus estudios.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Areas de investigación</div>
+          <div class="card-sub">Añade etiquetas para que los participantes entiendan tu enfoque. Máximo 6.</div>
+          <div class="tags-wrap" style="margin-bottom:12px">
+            <div class="tag">
+              Neurociencia cognitiva
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <div class="tag">
+              Psicología experimental
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <div class="tag">
+              Actividad física y salud
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <div class="tag-add" onclick="addTag()">+ Añadir área</div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-ghost" onclick="discardChanges()">Descartar</button>
+          <button class="btn-primary" onclick="saveChanges()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Guardar cambios
+          </button>
+        </div>
+
+      </div><!-- /tab-personal -->
+
+      <!-- TAB: SECURITY -->
+      <div class="tab-panel" id="tab-security">
+
+        <div class="card">
+          <div class="card-title">Contraseña y autenticación</div>
+          <div class="card-sub">Gestiona el acceso a tu cuenta.</div>
+
+          <div class="security-item">
+            <div class="sec-info">
+              <div class="sec-label">Contraseña</div>
+              <div class="sec-sub">Actualizada hace 3 meses</div>
+            </div>
+            <span class="sec-status sec-ok">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Activa
+            </span>
+            <button class="btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openPwdModal()">Cambiar</button>
+          </div>
+
+          <div class="security-item">
+            <div class="sec-info">
+              <div class="sec-label">Autenticación en dos pasos (2FA)</div>
+              <div class="sec-sub">Protege tu cuenta con un segundo factor</div>
+            </div>
+            <span class="sec-status sec-warn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              No activado
+            </span>
+            <button class="btn-ghost" style="font-size:12px;padding:6px 14px">Activar</button>
+          </div>
+
+          <div class="security-item">
+            <div class="sec-info">
+              <div class="sec-label">Sesiones activas</div>
+              <div class="sec-sub">1 sesión activa · Chrome en macOS</div>
+            </div>
+            <button class="btn-ghost" style="font-size:12px;padding:6px 14px">Ver sesiones</button>
+          </div>
+        </div>
+
+        <div class="danger-zone">
+          <div class="danger-title">Zona de peligro</div>
+          <div class="danger-text">La eliminación de tu cuenta es permanente. Todos tus experimentos, participantes y respuestas serán borrados de forma irreversible. Esta acción no puede deshacerse.</div>
+          <button class="btn-danger" onclick="openDeleteModal()">Eliminar cuenta permanentemente</button>
+        </div>
+
+      </div><!-- /tab-security -->
+
+      <!-- TAB: NOTIFICATIONS -->
+      <div class="tab-panel" id="tab-notifications">
+        <div class="card">
+          <div class="card-title">Preferencias de notificación</div>
+          <div class="card-sub">Elige cuándo quieres recibir emails de Empiria.</div>
+
+          <div style="display:flex;flex-direction:column;gap:0">
+            <!-- toggle rows -->
+            <div class="security-item">
+              <div class="sec-info">
+                <div class="sec-label">Nueva inscripción en experimento</div>
+                <div class="sec-sub">Cuando un participante confirma su inscripción</div>
+              </div>
+              <div class="toggle on" id="t1" onclick="toggleSwitch('t1')">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
+            <div class="security-item">
+              <div class="sec-info">
+                <div class="sec-label">Cuestionario completado</div>
+                <div class="sec-sub">Cuando un participante finaliza una fase</div>
+              </div>
+              <div class="toggle on" id="t2" onclick="toggleSwitch('t2')">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
+            <div class="security-item">
+              <div class="sec-info">
+                <div class="sec-label">Baja voluntaria de participante</div>
+                <div class="sec-sub">Cuando un participante se da de baja del estudio</div>
+              </div>
+              <div class="toggle on" id="t3" onclick="toggleSwitch('t3')">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
+            <div class="security-item">
+              <div class="sec-info">
+                <div class="sec-label">Resumen semanal del experimento</div>
+                <div class="sec-sub">Métricas de participación cada lunes</div>
+              </div>
+              <div class="toggle" id="t4" onclick="toggleSwitch('t4')">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
+            <div class="security-item">
+              <div class="sec-info">
+                <div class="sec-label">Novedades y actualizaciones de Empiria</div>
+                <div class="sec-sub">Nuevas funcionalidades y mejoras de la plataforma</div>
+              </div>
+              <div class="toggle" id="t5" onclick="toggleSwitch('t5')">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="saveChanges()">Guardar preferencias</button>
+        </div>
+      </div><!-- /tab-notifications -->
+
+    </div><!-- /left -->
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+
+      <!-- Plan -->
+      <div class="plan-card">
+        <div class="plan-header">
+          <div class="plan-badge">
+            <div class="plan-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#pg)" stroke-width="2"><defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6C4DE6"/><stop offset="1" stop-color="#00D4AA"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div>
+              <div class="plan-name">Researcher</div>
+              <div class="plan-price">€19 / mes</div>
+            </div>
+          </div>
+          <span class="plan-tag">Activo</span>
+        </div>
+
+        <div class="plan-usage">
+          <div class="usage-item">
+            <div class="usage-header">
+              <span class="usage-label">Experimentos activos</span>
+              <span class="usage-val">1 / 5</span>
+            </div>
+            <div class="usage-bar"><div class="usage-fill fill-violet" style="width:20%"></div></div>
+          </div>
+          <div class="usage-item">
+            <div class="usage-header">
+              <span class="usage-label">Participantes totales</span>
+              <span class="usage-val">9 / 200</span>
+            </div>
+            <div class="usage-bar"><div class="usage-fill fill-cyan" style="width:4.5%"></div></div>
+          </div>
+          <div class="usage-item">
+            <div class="usage-header">
+              <span class="usage-label">Almacenamiento de datos</span>
+              <span class="usage-val">12 MB / 1 GB</span>
+            </div>
+            <div class="usage-bar"><div class="usage-fill fill-violet" style="width:1.2%"></div></div>
+          </div>
+        </div>
+
+        <div class="plan-renew">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Renovación el 11 de mayo de 2026
+        </div>
+
+        <button class="btn-upgrade">Ver plan Institution</button>
+      </div>
+
+      <!-- Account stats -->
+      <div class="stats-card">
+        <div class="stats-title">Actividad de la cuenta</div>
+        <div class="stat-row">
+          <span class="stat-label">Miembro desde</span>
+          <span class="stat-val">Marzo 2026</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Experimentos creados</span>
+          <span class="stat-val">1</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Participantes totales</span>
+          <span class="stat-val">9</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Respuestas registradas</span>
+          <span class="stat-val">108</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Ultimo acceso</span>
+          <span class="stat-val">Hoy, 10:42</span>
+        </div>
+      </div>
+
+      <!-- Integrations -->
+      <div class="stats-card">
+        <div class="stats-title">Integraciones</div>
+        <div class="integration-item">
+          <div class="int-icon int-sb">SB</div>
+          <div class="int-info">
+            <div class="int-name">Supabase Auth</div>
+            <div class="int-status connected">Conectado</div>
+          </div>
+          <button class="int-btn">Gestionar</button>
+        </div>
+        <div class="integration-item">
+          <div class="int-icon int-orcid">ID</div>
+          <div class="int-info">
+            <div class="int-name">ORCID</div>
+            <div class="int-status connected">Vinculado</div>
+          </div>
+          <button class="int-btn">Desvincular</button>
+        </div>
+        <div class="integration-item">
+          <div class="int-icon int-export">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="int-info">
+            <div class="int-name">Exportación a SPSS / R</div>
+            <div class="int-status">Disponible en todos los planes</div>
+          </div>
+          <button class="int-btn">Exportar</button>
+        </div>
+      </div>
+
+    </div><!-- /right-col -->
+
+  </div><!-- /page-content -->
+</div><!-- /main-area -->
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay" id="pwd-modal">
+  <div class="modal">
+    <h2 class="modal-title">Cambiar contraseña</h2>
+    <p class="modal-sub">Introduce tu contraseña actual y la nueva contraseña que quieras usar.</p>
+    <div class="field">
+      <label>Contraseña actual</label>
+      <input type="password" placeholder="••••••••••" />
+    </div>
+    <div class="field">
+      <label>Nueva contraseña</label>
+      <input type="password" placeholder="Mínimo 8 caracteres" />
+    </div>
+    <div class="field">
+      <label>Confirmar nueva contraseña</label>
+      <input type="password" placeholder="Repite la nueva contraseña" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('pwd-modal')">Cancelar</button>
+      <button class="btn-primary" onclick="closeModal('pwd-modal')">Actualizar contraseña</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE ACCOUNT MODAL -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h2 class="modal-title" style="color:var(--danger)">Eliminar cuenta</h2>
+    <p class="modal-sub">Esta acción es permanente e irreversible. Para confirmar, escribe tu correo electrónico a continuación.</p>
+    <div style="background:rgba(224,92,107,.07);border:1px solid rgba(224,92,107,.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--muted);">
+      Se eliminarán todos tus experimentos (1), participantes (9), respuestas (108) y cualquier dato asociado a tu cuenta.
+    </div>
+    <div class="field">
+      <label>Confirma tu correo</label>
+      <input type="email" placeholder="carlos.romero@universitat.edu" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('delete-modal')">Cancelar</button>
+      <button style="background:var(--danger);color:white;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Eliminar cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  Cambios guardados correctamente
+</div>
+
+<style>
+/* Toggle switch */
+.toggle {
+  width: 40px; height: 22px; border-radius: 11px;
+  background: rgba(255,255,255,.1); border: 1px solid var(--border);
+  cursor: pointer; position: relative; transition: all .25s; flex-shrink: 0;
+}
+.toggle.on { background: var(--cyan); border-color: var(--cyan); }
+.toggle-knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: white; transition: transform .25s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.toggle.on .toggle-knob { transform: translateX(18px); }
+</style>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.profile-tab').forEach((t,i) => {
+    const names = ['personal','security','notifications'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function toggleSwitch(id) {
+  document.getElementById(id).classList.toggle('on');
+}
+
+function saveChanges() {
+  const t = document.getElementById('toast');
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2600);
+}
+
+function discardChanges() {
+  // would reload data from server
+}
+
+function openPwdModal()    { document.getElementById('pwd-modal').classList.add('open'); }
+function openDeleteModal() { document.getElementById('delete-modal').classList.add('open'); }
+function closeModal(id)    { document.getElementById(id).classList.remove('open'); }
+
+function addTag() {
+  const label = prompt('Nueva área de investigación:');
+  if (label && label.trim()) {
+    const wrap = document.querySelector('.tags-wrap');
+    const addBtn = wrap.querySelector('.tag-add');
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.innerHTML = `${label.trim()} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    wrap.insertBefore(tag, addBtn);
+  }
+}
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

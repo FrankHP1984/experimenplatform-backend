@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empiria — Cuestionario</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #080F1E;
+      --surface:  #0D1729;
+      --card:     #111E35;
+      --border:   rgba(255,255,255,0.07);
+      --violet:   #6C4DE6;
+      --violet-d: #5538CC;
+      --cyan:     #00D4AA;
+      --cyan-d:   #00B891;
+      --text:     #E8EEF8;
+      --muted:    #6B7A99;
+      --danger:   #E05C6B;
+      --warn:     #F0A500;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── CANVAS BACKGROUND ── */
+    #particle-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── HEADER ── */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8, 15, 30, 0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--cyan); }
+
+    .study-context {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .study-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .phase-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-ghost-sm {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-ghost-sm:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+    /* ── PROGRESS BAND ── */
+    .progress-band {
+      position: sticky;
+      top: 60px;
+      z-index: 99;
+      background: rgba(8, 15, 30, 0.75);
+      backdrop-filter: blur(10px);
+      padding: 10px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      min-width: 96px;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      border-radius: 2px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    .q-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .q-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      transition: all .3s;
+      cursor: pointer;
+    }
+    .q-dot.done  { background: var(--cyan); }
+    .q-dot.active { background: var(--violet); transform: scale(1.4); box-shadow: 0 0 8px rgba(108,77,230,.6); }
+
+    /* ── MAIN ── */
+    .main {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 24px 80px;
+    }
+
+    .q-wrapper {
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* Phase header pill */
+    .phase-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(108,77,230,.12);
+      border: 1px solid rgba(108,77,230,.25);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      color: #A78BF9;
+      margin-bottom: 28px;
+    }
+    .phase-pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--violet);
+    }
+
+    /* Question card */
+    .q-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      transition: opacity .25s, transform .25s;
+    }
+    .q-card.animating-out {
+      opacity: 0;
+      transform: translateX(-24px);
+    }
+    .q-card.animating-in {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+
+    .q-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .q-number {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .q-type-badge {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 5px;
+    }
+    .type-number    { background: rgba(108,77,230,.15); color: #A78BF9; }
+    .type-scale     { background: rgba(0,212,170,.12);  color: var(--cyan); }
+    .type-text      { background: rgba(255,255,255,.07); color: var(--muted); }
+    .type-boolean   { background: rgba(240,165,0,.12);   color: #F0C040; }
+    .type-multiple  { background: rgba(96,165,250,.12);  color: #93C5FD; }
+
+    .q-required {
+      font-size: 11px;
+      color: var(--danger);
+      font-weight: 500;
+    }
+
+    .q-text {
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .q-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 32px;
+      line-height: 1.55;
+    }
+
+    /* ── ANSWER TYPES ── */
+
+    /* NUMBER */
+    .number-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .number-input {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 32px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      padding: 14px 20px;
+      width: 180px;
+      text-align: center;
+      transition: border-color .2s;
+      outline: none;
+    }
+    .number-input:focus { border-color: var(--violet); }
+    .number-unit {
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .number-stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stepper-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+    }
+    .stepper-btn:hover { background: rgba(108,77,230,.2); border-color: var(--violet); }
+
+    /* SCALE */
+    .scale-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .scale-track {
+      display: flex;
+      gap: 6px;
+    }
+    .scale-btn {
+      flex: 1;
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scale-btn:hover { border-color: var(--violet); color: var(--text); background: rgba(108,77,230,.1); }
+    .scale-btn.selected {
+      border-color: var(--violet);
+      background: linear-gradient(135deg, rgba(108,77,230,.35), rgba(0,212,170,.15));
+      color: var(--text);
+      box-shadow: 0 0 16px rgba(108,77,230,.3);
+      transform: translateY(-2px);
+    }
+
+    /* TEXT */
+    .text-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      padding: 16px;
+      resize: vertical;
+      min-height: 120px;
+      outline: none;
+      transition: border-color .2s;
+      line-height: 1.6;
+    }
+    .text-input:focus { border-color: var(--violet); }
+    .text-input::placeholder { color: var(--muted); }
+    .char-count {
+      text-align: right;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* BOOLEAN */
+    .bool-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .bool-card {
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .bool-card:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.03); }
+    .bool-card.selected-yes {
+      border-color: var(--cyan);
+      background: rgba(0,212,170,.08);
+      box-shadow: 0 0 24px rgba(0,212,170,.2);
+    }
+    .bool-card.selected-no {
+      border-color: var(--danger);
+      background: rgba(224,92,107,.08);
+      box-shadow: 0 0 24px rgba(224,92,107,.15);
+    }
+    .bool-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    .bool-yes .bool-icon { color: var(--cyan); }
+    .bool-no  .bool-icon { color: var(--danger); }
+    .bool-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .bool-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* MULTIPLE CHOICE */
+    .mc-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .mc-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .mc-option:hover { border-color: rgba(108,77,230,.4); background: rgba(108,77,230,.05); }
+    .mc-option.selected {
+      border-color: var(--violet);
+      background: rgba(108,77,230,.1);
+    }
+    .mc-radio {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+    }
+    .mc-option.selected .mc-radio {
+      border-color: var(--violet);
+      background: var(--violet);
+    }
+    .mc-option.selected .mc-radio::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+    }
+    .mc-text {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    /* ── NAVIGATION ── */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 32px;
+    }
+
+    .btn-back {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 11px 22px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-back:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+    .btn-back:disabled { opacity: .3; pointer-events: none; }
+
+    .btn-next {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--violet), var(--violet-d));
+      border: none;
+      color: white;
+      padding: 11px 28px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 20px rgba(108,77,230,.3);
+    }
+    .btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(108,77,230,.45); }
+    .btn-next.finish {
+      background: linear-gradient(135deg, var(--cyan), var(--cyan-d));
+      box-shadow: 0 4px 20px rgba(0,212,170,.3);
+    }
+    .btn-next.finish:hover { box-shadow: 0 6px 24px rgba(0,212,170,.45); }
+
+    /* answer empty hint */
+    .answer-hint {
+      font-size: 12px;
+      color: var(--danger);
+      margin-top: 8px;
+      display: none;
+    }
+    .answer-hint.visible { display: block; }
+
+    /* ── COMPLETION SCREEN ── */
+    .completion-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 60px 24px;
+    }
+    .completion-screen.visible { display: flex; }
+
+    .completion-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0,212,170,.2), rgba(108,77,230,.2));
+      border: 2px solid var(--cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      box-shadow: 0 0 40px rgba(0,212,170,.25);
+    }
+    .completion-icon svg { color: var(--cyan); }
+
+    .completion-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .completion-sub {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .next-phase-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 32px;
+      max-width: 400px;
+      width: 100%;
+      margin-bottom: 32px;
+    }
+    .next-phase-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .next-phase-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .next-phase-date {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .completion-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-primary-cyan {
+      background: linear-gradient(135deg, var(--cyan), var(--cyan-d));
+      color: #080F1E;
+      font-weight: 700;
+      padding: 13px 28px;
+      border-radius: 9px;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 20px rgba(0,212,170,.3);
+      transition: all .2s;
+    }
+    .btn-primary-cyan:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,212,170,.45); }
+
+    /* ── TIME INDICATOR ── */
+    .time-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .time-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .3; }
+    }
+
+    /* ── AUTO SAVE TOAST ── */
+    .autosave-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 200;
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+    }
+    .autosave-toast.visible { transform: translateX(-50%) translateY(0); }
+    .autosave-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+    }
+
+    /* responsive */
+    @media (max-width: 600px) {
+      .app-header { padding: 0 16px; }
+      .progress-band { padding: 10px 16px; }
+      .main { padding: 24px 16px 60px; }
+      .q-card { padding: 24px 20px; }
+      .q-text { font-size: 18px; }
+      .scale-btn { font-size: 13px; border-radius: 8px; }
+      .study-context { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+
+<!-- ── HEADER ── -->
+<header class="app-header">
+  <div class="logo">Empiri<span>a</span></div>
+
+  <div class="study-context">
+    <div class="study-name">Efecto del ejercicio físico en el bienestar cognitivo</div>
+    <div class="phase-label">Fase 2 de 3 · Post-test</div>
+  </div>
+
+  <div class="header-actions">
+    <div class="time-indicator">
+      <div class="time-dot"></div>
+      Guardado automático
+    </div>
+    <button class="btn-ghost-sm" onclick="exitConfirm()">Salir y guardar</button>
+  </div>
+</header>
+
+<!-- ── PROGRESS BAND ── -->
+<div class="progress-band">
+  <span class="progress-label" id="progress-label">Pregunta 1 de 6</span>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+  </div>
+  <div class="q-dots" id="q-dots"></div>
+</div>
+
+<!-- ── MAIN ── -->
+<main class="main">
+  <div class="q-wrapper" id="q-wrapper">
+
+    <!-- Phase context pill -->
+    <div class="phase-pill">
+      <div class="phase-pill-dot"></div>
+      Post-test · Bloque de seguimiento
+    </div>
+
+    <!-- Question card -->
+    <div class="q-card" id="q-card">
+      <!-- Dynamic content injected by JS -->
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-bar" id="nav-bar">
+      <button class="btn-back" id="btn-back" onclick="prevQuestion()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Anterior
+      </button>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">
+        Siguiente
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <!-- Completion screen -->
+    <div class="completion-screen" id="completion-screen">
+      <div class="completion-icon">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 class="completion-title">Cuestionario completado</h2>
+      <p class="completion-sub">Tus respuestas han sido registradas. Muchas gracias por tu participación en este estudio.</p>
+
+      <div class="next-phase-card">
+        <div class="next-phase-label">Siguiente fase</div>
+        <div class="next-phase-name">Seguimiento final (Fase 3)</div>
+        <div class="next-phase-date">Disponible a partir del 28 de abril de 2026</div>
+      </div>
+
+      <div class="completion-actions">
+        <button class="btn-primary-cyan" onclick="goToDashboard()">Ir a mi panel</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── AUTOSAVE TOAST ── -->
+<div class="autosave-toast" id="autosave-toast">
+  <div class="autosave-dot"></div>
+  Respuesta guardada
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// QUESTION DATA
+// ════════════════════════════════════════════════
+const questions = [
+  {
+    id: 1,
+    type: 'number',
+    required: true,
+    text: '¿Cuántas horas de ejercicio aeróbico has realizado esta semana?',
+    sub: 'Incluye correr, ciclismo, natación u otras actividades cardiovasculares moderadas o intensas.',
+    unit: 'horas',
+    min: 0,
+    max: 40,
+    step: 0.5,
+    answer: null
+  },
+  {
+    id: 2,
+    type: 'scale',
+    required: true,
+    text: 'En una escala del 1 al 10, ¿cómo valorarías tu estado de ánimo general durante la última semana?',
+    sub: '1 = muy bajo, 10 = excelente',
+    min: 1,
+    max: 10,
+    labelMin: 'Muy bajo',
+    labelMax: 'Excelente',
+    answer: null
+  },
+  {
+    id: 3,
+    type: 'boolean',
+    required: true,
+    text: '¿Has tenido dificultades para conciliar o mantener el sueño en los últimos 7 días?',
+    sub: 'Considera cualquier episodio de insomnio, despertares frecuentes o sueño no reparador.',
+    answer: null
+  },
+  {
+    id: 4,
+    type: 'multiple',
+    required: true,
+    text: '¿Cuál de las siguientes describe mejor tu nivel de motivación para continuar en el programa?',
+    sub: 'Selecciona la opción que más se ajuste a cómo te has sentido esta semana.',
+    options: [
+      'Muy motivado/a, estoy disfrutando del proceso',
+      'Moderadamente motivado/a, con algún esfuerzo',
+      'Poco motivado/a, me cuesta mantener la constancia',
+      'Desmotivado/a, he pensado en abandonar'
+    ],
+    answer: null
+  },
+  {
+    id: 5,
+    type: 'scale',
+    required: false,
+    text: '¿En qué medida el ejercicio ha afectado tu capacidad de concentración en tareas cognitivas?',
+    sub: '1 = ha empeorado notablemente, 10 = ha mejorado notablemente',
+    min: 1,
+    max: 10,
+    labelMin: 'Ha empeorado',
+    labelMax: 'Ha mejorado',
+    answer: null
+  },
+  {
+    id: 6,
+    type: 'text',
+    required: false,
+    text: '¿Hay algo más que quieras comentar sobre tu experiencia durante esta fase del estudio?',
+    sub: 'Campo opcional. Cualquier observación adicional es bienvenida.',
+    placeholder: 'Escribe aquí tus comentarios...',
+    maxLength: 500,
+    answer: null
+  }
+];
+
+let currentIndex = 0;
+
+// ════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════
+function renderQuestion(idx, direction = 'forward') {
+  const q = questions[idx];
+  const card = document.getElementById('q-card');
+
+  // animate out
+  card.classList.add('animating-out');
+
+  setTimeout(() => {
+    card.innerHTML = buildQuestionHTML(q);
+    card.classList.remove('animating-out');
+    card.classList.add('animating-in');
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        card.classList.remove('animating-in');
+      });
+    });
+
+    // restore saved answer UI
+    restoreAnswer(q);
+
+    // update progress
+    updateProgress(idx);
+
+    // update nav
+    const backBtn = document.getElementById('btn-back');
+    const nextBtn = document.getElementById('btn-next');
+    backBtn.disabled = idx === 0;
+
+    if (idx === questions.length - 1) {
+      nextBtn.textContent = 'Finalizar';
+      nextBtn.innerHTML += ' <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+      nextBtn.classList.add('finish');
+    } else {
+      nextBtn.classList.remove('finish');
+      nextBtn.innerHTML = 'Siguiente <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+    }
+  }, 200);
+}
+
+function buildQuestionHTML(q) {
+  const reqBadge = q.required
+    ? `<span class="q-required">Obligatoria</span>`
+    : `<span style="font-size:11px;color:var(--muted)">Opcional</span>`;
+
+  const typeLabelMap = {
+    number: 'Numérica',
+    scale: 'Escala',
+    boolean: 'Sí / No',
+    multiple: 'Opción múltiple',
+    text: 'Texto libre'
+  };
+  const typeClass = {
+    number: 'type-number',
+    scale: 'type-scale',
+    boolean: 'type-boolean',
+    multiple: 'type-multiple',
+    text: 'type-text'
+  };
+
+  let answerHTML = '';
+
+  if (q.type === 'number') {
+    answerHTML = `
+      <div class="number-input-wrap">
+        <div class="number-stepper">
+          <button class="stepper-btn" onclick="stepNumber(${q.id}, ${q.step || 1})">+</button>
+          <button class="stepper-btn" onclick="stepNumber(${q.id}, -${q.step || 1})">-</button>
+        </div>
+        <input id="num-${q.id}" type="number" class="number-input"
+               min="${q.min}" max="${q.max}" step="${q.step || 1}"
+               placeholder="0"
+               oninput="saveAnswer(${q.id}, this.value)" />
+        <span class="number-unit">${q.unit}</span>
+      </div>
+    `;
+  } else if (q.type === 'scale') {
+    let btns = '';
+    for (let i = q.min; i <= q.max; i++) {
+      btns += `<button class="scale-btn" id="scale-${q.id}-${i}" onclick="selectScale(${q.id}, ${i})">${i}</button>`;
+    }
+    answerHTML = `
+      <div class="scale-wrap">
+        <div class="scale-labels">
+          <span>${q.labelMin}</span>
+          <span>${q.labelMax}</span>
+        </div>
+        <div class="scale-track">${btns}</div>
+      </div>
+    `;
+  } else if (q.type === 'boolean') {
+    answerHTML = `
+      <div class="bool-options">
+        <div class="bool-card bool-yes" id="bool-${q.id}-yes" onclick="selectBool(${q.id}, true)">
+          <div class="bool-icon" style="color:var(--cyan)">Si</div>
+          <div class="bool-label">Si</div>
+          <div class="bool-sub">Afirmativo</div>
+        </div>
+        <div class="bool-card bool-no" id="bool-${q.id}-no" onclick="selectBool(${q.id}, false)">
+          <div class="bool-icon" style="color:var(--danger)">No</div>
+          <div class="bool-label">No</div>
+          <div class="bool-sub">Negativo</div>
+        </div>
+      </div>
+    `;
+  } else if (q.type === 'multiple') {
+    let opts = '';
+    q.options.forEach((opt, i) => {
+      opts += `
+        <div class="mc-option" id="mc-${q.id}-${i}" onclick="selectMC(${q.id}, ${i})">
+          <div class="mc-radio"></div>
+          <span class="mc-text">${opt}</span>
+        </div>
+      `;
+    });
+    answerHTML = `<div class="mc-options">${opts}</div>`;
+  } else if (q.type === 'text') {
+    answerHTML = `
+      <textarea id="txt-${q.id}" class="text-input"
+                placeholder="${q.placeholder || ''}"
+                maxlength="${q.maxLength || 1000}"
+                oninput="saveTextAnswer(${q.id}, this)">${q.answer || ''}</textarea>
+      <div class="char-count" id="char-${q.id}">0 / ${q.maxLength || 1000}</div>
+    `;
+  }
+
+  return `
+    <div class="q-meta">
+      <span class="q-number">Pregunta ${questions.indexOf(q) + 1} de ${questions.length}</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${reqBadge}
+        <span class="q-type-badge ${typeClass[q.type]}">${typeLabelMap[q.type]}</span>
+      </div>
+    </div>
+    <h2 class="q-text">${q.text}</h2>
+    ${q.sub ? `<p class="q-sub">${q.sub}</p>` : ''}
+    ${answerHTML}
+    <p class="answer-hint" id="hint-${q.id}">Esta pregunta es obligatoria.</p>
+  `;
+}
+
+function restoreAnswer(q) {
+  if (q.answer === null) return;
+  if (q.type === 'number') {
+    const el = document.getElementById(`num-${q.id}`);
+    if (el) el.value = q.answer;
+  } else if (q.type === 'scale') {
+    const btn = document.getElementById(`scale-${q.id}-${q.answer}`);
+    if (btn) btn.classList.add('selected');
+  } else if (q.type === 'boolean') {
+    const key = q.answer ? 'yes' : 'no';
+    const el = document.getElementById(`bool-${q.id}-${key}`);
+    if (el) el.classList.add(q.answer ? 'selected-yes' : 'selected-no');
+  } else if (q.type === 'multiple') {
+    const el = document.getElementById(`mc-${q.id}-${q.answer}`);
+    if (el) el.classList.add('selected');
+  } else if (q.type === 'text') {
+    const el = document.getElementById(`txt-${q.id}`);
+    if (el) {
+      el.value = q.answer;
+      updateCharCount(q.id, el);
+    }
+  }
+}
+
+// ════════════════════════════════════════════════
+// ANSWER SAVING
+// ════════════════════════════════════════════════
+function saveAnswer(id, val) {
+  const q = questions.find(x => x.id === id);
+  q.answer = parseFloat(val);
+  triggerAutosave();
+}
+
+function saveTextAnswer(id, el) {
+  const q = questions.find(x => x.id === id);
+  q.answer = el.value;
+  updateCharCount(id, el);
+  triggerAutosave();
+}
+
+function updateCharCount(id, el) {
+  const q = questions.find(x => x.id === id);
+  const counter = document.getElementById(`char-${id}`);
+  if (counter) counter.textContent = `${el.value.length} / ${q.maxLength || 1000}`;
+}
+
+function selectScale(id, val) {
+  const q = questions.find(x => x.id === id);
+  for (let i = q.min; i <= q.max; i++) {
+    const btn = document.getElementById(`scale-${id}-${i}`);
+    if (btn) btn.classList.toggle('selected', i === val);
+  }
+  q.answer = val;
+  triggerAutosave();
+}
+
+function selectBool(id, val) {
+  const q = questions.find(x => x.id === id);
+  const yesEl = document.getElementById(`bool-${id}-yes`);
+  const noEl  = document.getElementById(`bool-${id}-no`);
+  yesEl.classList.remove('selected-yes');
+  noEl.classList.remove('selected-no');
+  if (val) yesEl.classList.add('selected-yes');
+  else     noEl.classList.add('selected-no');
+  q.answer = val;
+  triggerAutosave();
+}
+
+function selectMC(id, idx) {
+  const q = questions.find(x => x.id === id);
+  q.options.forEach((_, i) => {
+    const el = document.getElementById(`mc-${id}-${i}`);
+    if (el) el.classList.toggle('selected', i === idx);
+  });
+  q.answer = idx;
+  triggerAutosave();
+}
+
+function stepNumber(id, delta) {
+  const el = document.getElementById(`num-${id}`);
+  if (!el) return;
+  const q = questions.find(x => x.id === id);
+  let val = parseFloat(el.value || '0') + delta;
+  val = Math.max(q.min, Math.min(q.max, Math.round(val * 10) / 10));
+  el.value = val;
+  saveAnswer(id, val);
+}
+
+// ════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════
+function nextQuestion() {
+  const q = questions[currentIndex];
+  if (q.required && q.answer === null) {
+    const hint = document.getElementById(`hint-${q.id}`);
+    if (hint) hint.classList.add('visible');
+    return;
+  }
+
+  if (currentIndex === questions.length - 1) {
+    showCompletion();
+    return;
+  }
+
+  currentIndex++;
+  renderQuestion(currentIndex, 'forward');
+}
+
+function prevQuestion() {
+  if (currentIndex === 0) return;
+  currentIndex--;
+  renderQuestion(currentIndex, 'backward');
+}
+
+function showCompletion() {
+  document.getElementById('q-card').style.display = 'none';
+  document.getElementById('nav-bar').style.display = 'none';
+  document.querySelector('.phase-pill').style.display = 'none';
+  const cs = document.getElementById('completion-screen');
+  cs.style.display = 'flex';
+  cs.classList.add('visible');
+  updateProgress(questions.length - 1, true);
+}
+
+function goToDashboard() {
+  window.location.href = 'participant-dashboard.html';
+}
+
+function exitConfirm() {
+  if (confirm('Se guardarán tus respuestas actuales. Podrás retomar el cuestionario desde donde lo dejaste.')) {
+    window.location.href = 'participant-dashboard.html';
+  }
+}
+
+// ════════════════════════════════════════════════
+// PROGRESS
+// ════════════════════════════════════════════════
+function updateProgress(idx, completed = false) {
+  const total = questions.length;
+  const pct = completed ? 100 : Math.round((idx / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = completed
+    ? 'Completado'
+    : `Pregunta ${idx + 1} de ${total}`;
+
+  const dotsEl = document.getElementById('q-dots');
+  dotsEl.innerHTML = '';
+  questions.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'q-dot';
+    if (completed || i < idx)   d.classList.add('done');
+    if (!completed && i === idx) d.classList.add('active');
+    d.onclick = () => {
+      currentIndex = i;
+      renderQuestion(i);
+    };
+    dotsEl.appendChild(d);
+  });
+}
+
+// ════════════════════════════════════════════════
+// AUTOSAVE TOAST
+// ════════════════════════════════════════════════
+let autosaveTimer = null;
+function triggerAutosave() {
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => {
+    const toast = document.getElementById('autosave-toast');
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 2200);
+  }, 800);
+}
+
+// ════════════════════════════════════════════════
+// PARTICLE CANVAS
+// ════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, particles;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function init() {
+    resize();
+    const count = Math.floor((W * H) / 18000);
+    particles = Array.from({ length: count }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - .5) * .35,
+      vy: (Math.random() - .5) * .35,
+      r: Math.random() * 1.8 + .6
+    }));
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(108,77,230,0.45)';
+      ctx.fill();
+    });
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d  = Math.sqrt(dx*dx + dy*dy);
+        if (d < 110) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(108,77,230,${0.12 * (1 - d/110)})`;
+          ctx.lineWidth = .6;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', init);
+  init();
+  draw();
+})();
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+renderQuestion(0);
+</script>
+</body>
+</html>

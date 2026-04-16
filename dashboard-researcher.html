@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empiria — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080F1E;
+      --bg2:      #0D1628;
+      --bg3:      #111D35;
+      --bg4:      #162038;
+      --violet:   #6C4DE6;
+      --violet2:  #8B6FF0;
+      --cyan:     #00D4AA;
+      --cyan2:    #00F0C0;
+      --white:    #F0F4FF;
+      --gray:     #8A96B0;
+      --gray2:    #5A6480;
+      --border:   rgba(108,77,230,0.15);
+      --border2:  rgba(255,255,255,0.06);
+    }
+
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--white); overflow: hidden; }
+
+    /* ─── APP SHELL ─── */
+    .app {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      grid-template-rows: 100vh;
+      height: 100vh;
+    }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 20px;
+    }
+
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .logo-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .logo-text span { color: var(--cyan); }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border2);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .user-card:hover { background: rgba(255,255,255,0.05); border-color: var(--border); }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 12.5px; font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-plan { font-size: 10.5px; color: var(--cyan); font-weight: 500; }
+
+    .user-chevron { color: var(--gray2); flex-shrink: 0; }
+    .user-chevron svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    /* Nav */
+    .nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gray2);
+      padding: 0 8px;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    .nav-section-label:first-child { margin-top: 0; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 9px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.18s;
+      margin-bottom: 2px;
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--white); }
+
+    .nav-item.active {
+      background: rgba(108,77,230,0.12);
+      color: var(--white);
+      border-color: rgba(108,77,230,0.2);
+      font-weight: 600;
+    }
+
+    .nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; flex-shrink: 0; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(108,77,230,0.2);
+      color: var(--violet2);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+
+    .nav-badge.green {
+      background: rgba(0,212,170,0.15);
+      color: var(--cyan);
+    }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border2);
+    }
+
+    .nav-item.danger:hover { background: rgba(239,68,68,0.08); color: #F87171; }
+
+    /* ─── MAIN ─── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 56px;
+      border-bottom: 1px solid var(--border2);
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .breadcrumb-item { color: var(--gray); }
+    .breadcrumb-item.active { color: var(--white); font-weight: 600; }
+    .breadcrumb-sep { color: var(--gray2); }
+    .breadcrumb-sep svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+    .topbar-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .topbar-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .topbar-btn.ghost {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--gray);
+    }
+    .topbar-btn.ghost:hover { border-color: var(--border); color: var(--white); background: rgba(255,255,255,0.03); }
+
+    .topbar-btn.primary {
+      background: linear-gradient(135deg, var(--violet), #5A3BD4);
+      border: none;
+      color: #fff;
+      box-shadow: 0 3px 14px rgba(108,77,230,0.3);
+    }
+    .topbar-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 5px 20px rgba(108,77,230,0.45); }
+
+    /* Content */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 28px 40px;
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      color: var(--white);
+      margin-bottom: 3px;
+    }
+
+    .page-subtitle { font-size: 13.5px; color: var(--gray); }
+
+    /* ─── ONBOARDING BANNER ─── */
+    .onboarding-banner {
+      background: linear-gradient(135deg, rgba(108,77,230,0.12), rgba(0,212,170,0.06));
+      border: 1px solid rgba(108,77,230,0.25);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .banner-left { flex: 1; }
+
+    .banner-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .banner-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .banner-steps {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .banner-step {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .banner-step svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; flex-shrink: 0; }
+
+    .banner-step.done {
+      background: rgba(0,212,170,0.1);
+      color: var(--cyan);
+    }
+
+    .banner-step.pending {
+      background: rgba(255,255,255,0.04);
+      color: var(--gray);
+      border: 1px solid var(--border2);
+      cursor: pointer;
+    }
+    .banner-step.pending:hover { border-color: var(--border); color: var(--white); background: rgba(255,255,255,0.07); }
+
+    .banner-step.active {
+      background: rgba(108,77,230,0.15);
+      color: var(--violet2);
+      border: 1px solid rgba(108,77,230,0.25);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .banner-step.active:hover { background: rgba(108,77,230,0.22); }
+
+    .banner-arr { color: var(--gray2); }
+    .banner-arr svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .banner-progress {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .banner-pct {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .banner-pct-label { font-size: 11px; color: var(--gray); }
+
+    .banner-bar {
+      width: 100px;
+      height: 4px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .banner-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      border-radius: 4px;
+    }
+
+    .banner-dismiss {
+      background: none;
+      border: none;
+      color: var(--gray2);
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+    .banner-dismiss:hover { color: var(--gray); }
+    .banner-dismiss svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    /* ─── STATS ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 18px 20px;
+      transition: all 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border); }
+
+    .stat-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .stat-label { font-size: 12px; color: var(--gray); font-weight: 500; }
+
+    .stat-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stat-icon svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+    .stat-icon.violet { background: rgba(108,77,230,0.15); color: var(--violet2); }
+    .stat-icon.cyan   { background: rgba(0,212,170,0.12); color: var(--cyan); }
+    .stat-icon.blue   { background: rgba(74,139,245,0.12); color: #4A8BF5; }
+    .stat-icon.gray   { background: rgba(255,255,255,0.05); color: var(--gray); }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.5px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-delta {
+      font-size: 11.5px;
+      color: var(--gray);
+    }
+
+    .stat-delta.up   { color: var(--cyan); }
+    .stat-delta.down { color: #F87171; }
+
+    /* ─── TWO COLUMN ─── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .card-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .card-action {
+      font-size: 12px;
+      color: var(--violet2);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      transition: color 0.2s;
+    }
+    .card-action:hover { color: var(--white); }
+
+    /* ─── EXPERIMENT LIST ─── */
+    .exp-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .exp-item:last-child { border-bottom: none; }
+    .exp-item:hover { background: rgba(255,255,255,0.025); }
+
+    .exp-color {
+      width: 4px;
+      border-radius: 4px;
+      align-self: stretch;
+      flex-shrink: 0;
+    }
+
+    .exp-info { flex: 1; min-width: 0; }
+
+    .exp-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .exp-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11.5px;
+      color: var(--gray);
+    }
+
+    .exp-meta-sep { color: var(--gray2); }
+
+    .exp-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-badge.draft    { background: rgba(255,255,255,0.06); color: var(--gray); }
+    .status-badge.active   { background: rgba(0,212,170,0.12); color: var(--cyan); }
+    .status-badge.paused   { background: rgba(251,191,36,0.12); color: #FBD524; }
+    .status-badge.finished { background: rgba(74,139,245,0.12); color: #4A8BF5; }
+
+    .exp-progress-bar {
+      width: 80px;
+      height: 3px;
+      background: var(--border2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .exp-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      border-radius: 3px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: rgba(108,77,230,0.1);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .empty-icon svg { width: 22px; height: 22px; stroke: var(--violet2); fill: none; stroke-width: 1.6; stroke-linecap: round; }
+
+    .empty-title { font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+    .empty-desc  { font-size: 13px; color: var(--gray); line-height: 1.6; margin-bottom: 16px; }
+
+    .btn-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-sm svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .btn-sm.primary { background: linear-gradient(135deg, var(--violet), #5A3BD4); border: none; color: #fff; }
+    .btn-sm.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(108,77,230,0.4); }
+    .btn-sm.ghost { background: none; border: 1px solid var(--border2); color: var(--gray); }
+    .btn-sm.ghost:hover { border-color: var(--border); color: var(--white); }
+
+    /* ─── ACTIVITY ─── */
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border2);
+      transition: background 0.15s;
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-item:hover { background: rgba(255,255,255,0.02); }
+
+    .activity-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .activity-text { font-size: 12.5px; color: var(--gray); line-height: 1.55; flex: 1; }
+    .activity-text strong { color: var(--white); font-weight: 600; }
+    .activity-time { font-size: 11px; color: var(--gray2); flex-shrink: 0; margin-top: 2px; }
+
+    /* ─── QUICK ACTIONS ─── */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .quick-action {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .quick-action:hover { border-color: var(--border); background: rgba(108,77,230,0.06); }
+
+    .qa-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 8px;
+    }
+    .qa-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+    .qa-icon.v { background: rgba(108,77,230,0.15); color: var(--violet2); }
+    .qa-icon.c { background: rgba(0,212,170,0.1); color: var(--cyan); }
+
+    .qa-label { font-size: 12px; font-weight: 600; color: var(--white); margin-bottom: 2px; }
+    .qa-desc  { font-size: 11px; color: var(--gray); line-height: 1.4; }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(8,15,30,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid rgba(108,77,230,0.25);
+      border-radius: 18px;
+      padding: 28px;
+      width: 100%;
+      max-width: 460px;
+      transform: translateY(12px);
+      transition: transform 0.25s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 6px;
+    }
+    .modal-title  { font-size: 17px; font-weight: 800; color: var(--white); }
+    .modal-sub    { font-size: 13px; color: var(--gray); margin-bottom: 22px; }
+    .modal-close  { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 20px; line-height: 1; }
+    .modal-close:hover { color: var(--white); }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--white); margin-bottom: 7px; }
+    .form-input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      color: var(--white); padding: 10px 14px; border-radius: 9px; font-size: 13.5px;
+      font-family: 'Inter', sans-serif; outline: none; transition: all 0.2s;
+    }
+    .form-input:focus { border-color: var(--violet); background: rgba(108,77,230,0.06); box-shadow: 0 0 0 3px rgba(108,77,230,0.12); }
+    .form-input::placeholder { color: rgba(138,150,176,0.5); }
+    select.form-input { appearance: none; cursor: pointer; }
+    select.form-input option { background: var(--bg2); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+
+    .btn-modal {
+      padding: 10px 20px; border-radius: 9px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s;
+    }
+    .btn-modal.ghost { background: none; border: 1px solid var(--border2); color: var(--gray); }
+    .btn-modal.ghost:hover { border-color: var(--border); color: var(--white); }
+    .btn-modal.primary { background: linear-gradient(135deg, var(--violet), #5A3BD4); border: none; color: #fff; box-shadow: 0 3px 14px rgba(108,77,230,0.3); }
+    .btn-modal.primary:hover { box-shadow: 0 5px 20px rgba(108,77,230,0.45); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .two-col { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">E</div>
+        <span class="logo-text">Empiri<span>a</span></span>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar">FH</div>
+        <div class="user-info">
+          <div class="user-name">Francisco Hermoso</div>
+          <div class="user-plan">Plan Starter</div>
+        </div>
+        <div class="user-chevron">
+          <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section-label">Principal</div>
+
+      <a class="nav-item active">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+
+      <a class="nav-item" onclick="switchTab('experiments')">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        Experimentos
+        <span class="nav-badge">1</span>
+      </a>
+
+      <a class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Participantes
+        <span class="nav-badge green">0</span>
+      </a>
+
+      <a class="nav-item">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Respuestas
+      </a>
+
+      <div class="nav-section-label">Cuenta</div>
+
+      <a class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+        Perfil
+      </a>
+
+      <a class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Configuración
+      </a>
+
+      <a class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Plan y facturación
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-item danger">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Cerrar sesión
+      </a>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="breadcrumb">
+          <span class="breadcrumb-item active">Dashboard</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn ghost">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Buscar
+        </button>
+        <button class="topbar-btn ghost">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <button class="topbar-btn ghost" onclick="openModal()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuevo experimento
+        </button>
+        <button class="topbar-btn primary" onclick="alert('Ir al experimento en borrador')">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          Continuar borrador
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="main-content">
+
+      <!-- Dashboard view -->
+      <div id="view-dashboard">
+
+        <!-- Page header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Buenos días, Francisco</h1>
+            <p class="page-subtitle">Esto es lo que tienes pendiente hoy</p>
+          </div>
+        </div>
+
+        <!-- Onboarding banner -->
+        <div class="onboarding-banner" id="onboarding-banner">
+          <div class="banner-left">
+            <div class="banner-title">
+              <div class="banner-dot"></div>
+              Completa la configuración de tu primer experimento
+            </div>
+            <div class="banner-steps">
+              <div class="banner-step done">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Cuenta creada
+              </div>
+              <div class="banner-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+              <div class="banner-step done">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Experimento creado
+              </div>
+              <div class="banner-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+              <div class="banner-step active" onclick="alert('Ir a configurar fases')">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Añadir fases
+              </div>
+              <div class="banner-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+              <div class="banner-step pending">
+                Crear preguntas
+              </div>
+              <div class="banner-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+              <div class="banner-step pending">
+                Invitar participantes
+              </div>
+            </div>
+          </div>
+          <div class="banner-progress">
+            <div class="banner-pct">40%</div>
+            <div class="banner-pct-label">completado</div>
+            <div class="banner-bar"><div class="banner-bar-fill" style="width:40%"></div></div>
+          </div>
+          <button class="banner-dismiss" onclick="document.getElementById('onboarding-banner').style.display='none'">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-card-top">
+              <span class="stat-label">Experimentos</span>
+              <div class="stat-icon violet">
+                <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+              </div>
+            </div>
+            <div class="stat-value">1</div>
+            <div class="stat-delta">1 en borrador</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-top">
+              <span class="stat-label">Participantes</span>
+              <div class="stat-icon cyan">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+            </div>
+            <div class="stat-value">0</div>
+            <div class="stat-delta">Completa el borrador para añadir participantes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-top">
+              <span class="stat-label">Respuestas recogidas</span>
+              <div class="stat-icon blue">
+                <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+            </div>
+            <div class="stat-value">0</div>
+            <div class="stat-delta">Disponibles al activar el estudio</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-top">
+              <span class="stat-label">Capacidad restante</span>
+              <div class="stat-icon gray">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+            </div>
+            <div class="stat-value" style="color:var(--cyan)">2</div>
+            <div class="stat-delta">Experimentos disponibles en Starter</div>
+          </div>
+        </div>
+
+        <!-- Two col -->
+        <div class="two-col">
+
+          <!-- Experiments -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Mis experimentos</span>
+              <button class="card-action">Ver todos</button>
+            </div>
+
+            <!-- Draft experiment -->
+            <div class="exp-item">
+              <div class="exp-color" style="background: var(--violet)"></div>
+              <div class="exp-info">
+                <div class="exp-title">Efecto del ejercicio físico en la atención sostenida</div>
+                <div class="exp-meta">
+                  <span>Pretest–Postest</span>
+                  <span class="exp-meta-sep">·</span>
+                  <span>0 fases</span>
+                  <span class="exp-meta-sep">·</span>
+                  <span>0 participantes</span>
+                </div>
+              </div>
+              <div class="exp-right">
+                <span class="status-badge draft">Borrador</span>
+                <div class="exp-progress-bar"><div class="exp-progress-fill" style="width:0%"></div></div>
+              </div>
+            </div>
+
+            <!-- Empty state for rest -->
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
+              <div class="empty-title">Crea tu segundo experimento</div>
+              <div class="empty-desc">Tienes 2 experimentos disponibles en tu plan actual.</div>
+              <button class="btn-sm primary" onclick="openModal()">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Nuevo experimento
+              </button>
+            </div>
+          </div>
+
+          <!-- Right column -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+
+            <!-- Quick actions -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Acciones rápidas</span>
+              </div>
+              <div class="quick-actions">
+                <div class="quick-action" onclick="alert('Ir a configurar fases')">
+                  <div class="qa-icon v">
+                    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  </div>
+                  <div class="qa-label">Añadir fases</div>
+                  <div class="qa-desc">Define las etapas del experimento</div>
+                </div>
+                <div class="quick-action" onclick="alert('Ir a crear preguntas')">
+                  <div class="qa-icon v">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  </div>
+                  <div class="qa-label">Crear preguntas</div>
+                  <div class="qa-desc">Diseña los cuestionarios de cada fase</div>
+                </div>
+                <div class="quick-action" onclick="alert('Generar enlace de invitación')">
+                  <div class="qa-icon c">
+                    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  </div>
+                  <div class="qa-label">Invitar participantes</div>
+                  <div class="qa-desc">Genera un enlace de acceso</div>
+                </div>
+                <div class="quick-action" onclick="alert('Exportar datos')">
+                  <div class="qa-icon c">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </div>
+                  <div class="qa-label">Exportar CSV</div>
+                  <div class="qa-desc">Descarga los datos recogidos</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent activity -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Actividad reciente</span>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--cyan)"></div>
+                <div class="activity-text">
+                  Cuenta verificada y perfil creado correctamente
+                </div>
+                <div class="activity-time">Ahora</div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--violet2)"></div>
+                <div class="activity-text">
+                  Experimento <strong>Efecto del ejercicio físico...</strong> creado en borrador
+                </div>
+                <div class="activity-time">Hace 2 min</div>
+              </div>
+              <div class="empty-state" style="padding:20px">
+                <div class="empty-desc" style="margin-bottom:0">La actividad de tu cuenta aparecerá aquí.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+      <!-- / Dashboard view -->
+
+    </div>
+    <!-- / Content -->
+  </div>
+  <!-- / Main -->
+
+</div>
+<!-- / App -->
+
+<!-- ─── MODAL NUEVO EXPERIMENTO ─── -->
+<div class="modal-overlay" id="modal" onclick="closeModalOverlay(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Nuevo experimento</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <p class="modal-sub">Define los datos básicos. Podrás configurar fases y preguntas desde el panel del experimento.</p>
+    <div class="form-group">
+      <label class="form-label">Título del experimento</label>
+      <input class="form-input" type="text" placeholder="Ej: Efecto de la música en la memoria de trabajo" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de diseño</label>
+      <select class="form-input">
+        <option value="">Selecciona un diseño...</option>
+        <option>Pretest–Postest</option>
+        <option>Entre sujetos</option>
+        <option>Longitudinal</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha de inicio</label>
+        <input class="form-input" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de fin</label>
+        <input class="form-input" type="date" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn-modal primary" onclick="closeModal()">Crear experimento</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openModal()  { document.getElementById('modal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal() { document.getElementById('modal').classList.remove('open'); document.body.style.overflow=''; }
+function closeModalOverlay(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+
+</body>
+</html>

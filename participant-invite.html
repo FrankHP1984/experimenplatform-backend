@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empiria — Invitación al estudio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080F1E;
+      --bg2:     #0D1628;
+      --bg3:     #111D35;
+      --violet:  #6C4DE6;
+      --violet2: #8B6FF0;
+      --cyan:    #00D4AA;
+      --white:   #F0F4FF;
+      --gray:    #8A96B0;
+      --gray2:   #5A6480;
+      --border:  rgba(108,77,230,0.15);
+      --border2: rgba(255,255,255,0.06);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      min-height: 100vh;
+    }
+
+    /* ─── CANVAS ─── */
+    #canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.2;
+    }
+
+    /* ─── LAYOUT ─── */
+    .layout {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 480px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      gap: 60px;
+      align-items: start;
+    }
+
+    /* ─── LEFT PANEL ─── */
+    .left {
+      padding: 48px 0 60px;
+      position: sticky;
+      top: 0;
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 52px;
+    }
+
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900; color: #fff;
+    }
+
+    .logo-text { font-size: 16px; font-weight: 700; color: var(--white); }
+    .logo-text span { color: var(--cyan); }
+
+    /* Study info */
+    .study-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--violet2);
+      margin-bottom: 16px;
+    }
+
+    .study-tag-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--violet2);
+    }
+
+    .study-title {
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+
+    .study-desc {
+      font-size: 15px;
+      color: var(--gray);
+      line-height: 1.7;
+      margin-bottom: 32px;
+      max-width: 420px;
+    }
+
+    /* Study details */
+    .study-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .study-detail {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13.5px;
+      color: var(--gray);
+    }
+
+    .study-detail-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: rgba(108,77,230,0.1);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .study-detail-icon svg {
+      width: 15px; height: 15px;
+      stroke: var(--violet2); fill: none;
+      stroke-width: 1.8; stroke-linecap: round;
+    }
+
+    .study-detail strong { color: var(--white); font-weight: 600; }
+
+    /* Researcher card */
+    .researcher-card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .researcher-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+
+    .researcher-label { font-size: 11px; color: var(--gray); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+    .researcher-name  { font-size: 14px; font-weight: 700; color: var(--white); }
+    .researcher-inst  { font-size: 12px; color: var(--gray); }
+
+    /* Trust badges */
+    .trust-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .trust-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: var(--gray);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border2);
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+
+    .trust-badge svg {
+      width: 12px; height: 12px;
+      stroke: var(--cyan); fill: none;
+      stroke-width: 2; stroke-linecap: round;
+    }
+
+    /* ─── RIGHT PANEL (FORM) ─── */
+    .right {
+      padding: 48px 0 60px;
+    }
+
+    /* Step indicator */
+    .step-indicator-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 28px;
+    }
+
+    .step-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .step-dot.done {
+      background: rgba(0,212,170,0.15);
+      border: 1px solid rgba(0,212,170,0.3);
+      color: var(--cyan);
+    }
+
+    .step-dot.done svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+    .step-dot.active {
+      background: linear-gradient(135deg, var(--violet), #5A3BD4);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(108,77,230,0.4);
+    }
+
+    .step-dot.pending {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--gray2);
+    }
+
+    .step-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border2);
+      transition: background 0.3s;
+    }
+
+    .step-line.done { background: rgba(0,212,170,0.3); }
+
+    .step-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      margin-top: -18px;
+    }
+
+    .step-label-item {
+      font-size: 10.5px;
+      color: var(--gray2);
+      font-weight: 500;
+      text-align: center;
+      width: 28px;
+      transition: color 0.3s;
+    }
+
+    .step-label-item.active { color: var(--white); }
+
+    /* Form card */
+    .form-card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .form-card-header {
+      padding: 22px 26px;
+      border-bottom: 1px solid var(--border2);
+      background: rgba(108,77,230,0.04);
+    }
+
+    .form-card-title { font-size: 16px; font-weight: 800; color: var(--white); margin-bottom: 3px; }
+    .form-card-sub   { font-size: 13px; color: var(--gray); }
+
+    .form-body { padding: 24px 26px; }
+
+    /* Form elements */
+    .form-group { margin-bottom: 18px; }
+
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 7px;
+    }
+
+    .form-label span { font-weight: 400; color: var(--gray); font-size: 11.5px; margin-left: 4px; }
+
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--white);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--violet);
+      background: rgba(108,77,230,0.06);
+      box-shadow: 0 0 0 3px rgba(108,77,230,0.12);
+    }
+
+    .form-input::placeholder { color: rgba(138,150,176,0.5); }
+
+    select.form-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A96B0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      cursor: pointer;
+    }
+
+    select.form-input option { background: var(--bg2); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* Section divider */
+    .form-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--gray2);
+      margin-bottom: 14px;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border2);
+    }
+
+    /* Scale input */
+    .scale-input { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .scale-btn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      color: var(--gray);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .scale-btn:hover { border-color: rgba(108,77,230,0.4); color: var(--white); }
+
+    .scale-btn.selected {
+      border-color: var(--violet);
+      background: rgba(108,77,230,0.2);
+      color: var(--white);
+      box-shadow: 0 2px 10px rgba(108,77,230,0.25);
+    }
+
+    /* Boolean input */
+    .bool-input { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .bool-btn {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      color: var(--gray);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .bool-btn:hover { border-color: rgba(108,77,230,0.4); color: var(--white); }
+
+    .bool-btn.selected {
+      border-color: var(--violet);
+      background: rgba(108,77,230,0.15);
+      color: var(--white);
+    }
+
+    /* Multiple choice */
+    .mc-input { display: flex; flex-direction: column; gap: 8px; }
+
+    .mc-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mc-option:hover { border-color: rgba(108,77,230,0.35); background: rgba(108,77,230,0.05); }
+
+    .mc-option.selected {
+      border-color: var(--violet);
+      background: rgba(108,77,230,0.12);
+    }
+
+    .mc-radio {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .mc-option.selected .mc-radio {
+      border-color: var(--violet);
+      background: var(--violet);
+    }
+
+    .mc-option.selected .mc-radio::after {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .mc-option-label { font-size: 13.5px; color: var(--gray); transition: color 0.2s; }
+    .mc-option.selected .mc-option-label { color: var(--white); }
+
+    /* Form footer */
+    .form-footer {
+      padding: 18px 26px;
+      border-top: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0,0,0,0.15);
+    }
+
+    .form-back {
+      background: none; border: none;
+      color: var(--gray); font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      display: flex; align-items: center; gap: 6px;
+      transition: color 0.2s; padding: 8px 0;
+    }
+    .form-back:hover { color: var(--white); }
+    .form-back svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .form-next {
+      background: linear-gradient(135deg, var(--violet), #5A3BD4);
+      border: none; color: #fff;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 18px rgba(108,77,230,0.35);
+      transition: all 0.25s;
+    }
+    .form-next:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(108,77,230,0.5); }
+    .form-next svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .form-next.finish {
+      background: linear-gradient(135deg, var(--cyan), #00B895);
+      color: #000; font-weight: 700;
+      box-shadow: 0 4px 18px rgba(0,212,170,0.3);
+    }
+    .form-next.finish:hover { box-shadow: 0 6px 24px rgba(0,212,170,0.45); }
+
+    .step-counter { font-size: 12px; color: var(--gray2); }
+
+    /* ─── SUCCESS SCREEN ─── */
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 40px;
+    }
+
+    .success-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(0,212,170,0.12);
+      border: 2px solid rgba(0,212,170,0.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .success-icon svg { width: 32px; height: 32px; stroke: var(--cyan); fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+    .success-title { font-size: 24px; font-weight: 800; color: var(--white); margin-bottom: 10px; }
+
+    .success-sub { font-size: 15px; color: var(--gray); line-height: 1.65; margin-bottom: 28px; }
+
+    .success-details {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .success-detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .success-detail-row:last-child { border-bottom: none; }
+    .success-detail-key { color: var(--gray); }
+    .success-detail-val { color: var(--white); font-weight: 500; }
+
+    .btn-login {
+      background: linear-gradient(135deg, var(--violet), #5A3BD4);
+      border: none; color: #fff;
+      padding: 13px 28px; border-radius: 10px;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 18px rgba(108,77,230,0.35);
+      transition: all 0.25s; display: inline-flex;
+      align-items: center; gap: 8px;
+    }
+    .btn-login:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(108,77,230,0.5); }
+    .btn-login svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    .btn-skip-login {
+      background: none; border: none;
+      color: var(--gray); font-size: 13px;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      margin-top: 12px; display: block;
+      width: 100%; text-align: center;
+      transition: color 0.2s;
+    }
+    .btn-skip-login:hover { color: var(--white); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 820px) {
+      .layout { grid-template-columns: 1fr; gap: 0; padding: 0 20px; }
+      .left { padding: 32px 0 0; position: static; }
+      .left .study-desc { max-width: 100%; }
+      .right { padding: 24px 0 40px; }
+      .logo { margin-bottom: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="layout">
+
+  <!-- ─── LEFT: STUDY INFO ─── -->
+  <div class="left">
+    <div class="logo">
+      <div class="logo-icon">E</div>
+      <span class="logo-text">Empiri<span>a</span></span>
+    </div>
+
+    <div class="study-tag">
+      <div class="study-tag-dot"></div>
+      Invitación a estudio
+    </div>
+
+    <h1 class="study-title">Efecto del ejercicio físico en la atención sostenida</h1>
+
+    <p class="study-desc">
+      Este estudio analiza cómo la práctica regular de ejercicio físico influye en los niveles de atención y concentración a lo largo del tiempo. Tu participación es voluntaria y confidencial.
+    </p>
+
+    <div class="study-details">
+      <div class="study-detail">
+        <div class="study-detail-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <span><strong>Duración</strong> — abril a septiembre 2026</span>
+      </div>
+      <div class="study-detail">
+        <div class="study-detail-icon">
+          <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </div>
+        <span><strong>3 fases</strong> — Pretest, Intervención y Postest</span>
+      </div>
+      <div class="study-detail">
+        <div class="study-detail-icon">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <span><strong>8 preguntas</strong> en total, repartidas por fases</span>
+      </div>
+      <div class="study-detail">
+        <div class="study-detail-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <span><strong>Datos confidenciales</strong> — uso exclusivo investigador</span>
+      </div>
+    </div>
+
+    <div class="researcher-card">
+      <div class="researcher-avatar">FH</div>
+      <div>
+        <div class="researcher-label">Investigador responsable</div>
+        <div class="researcher-name">Dr. Francisco Hermoso</div>
+        <div class="researcher-inst">Universidad de Granada</div>
+      </div>
+    </div>
+
+    <div class="trust-badges">
+      <div class="trust-badge">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Participación voluntaria
+      </div>
+      <div class="trust-badge">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Datos anonimizados
+      </div>
+      <div class="trust-badge">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Cumple RGPD
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── RIGHT: FORM ─── -->
+  <div class="right">
+
+    <!-- Step indicator -->
+    <div class="step-indicator-row" id="step-indicators">
+      <div class="step-dot active" id="dot-1">1</div>
+      <div class="step-line" id="line-1"></div>
+      <div class="step-dot pending" id="dot-2">2</div>
+      <div class="step-line" id="line-2"></div>
+      <div class="step-dot pending" id="dot-3">3</div>
+    </div>
+
+    <div class="step-labels">
+      <span class="step-label-item active" id="lbl-1">Tus datos</span>
+      <span class="step-label-item" id="lbl-2">Cuestionario</span>
+      <span class="step-label-item" id="lbl-3">Confirmar</span>
+    </div>
+
+    <!-- ── STEP 1: Datos personales ── -->
+    <div id="step-1">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-title">Tus datos de participación</div>
+          <div class="form-card-sub">Esta información solo será visible para el investigador responsable del estudio.</div>
+        </div>
+        <div class="form-body">
+
+          <div class="form-section-label">Datos personales</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nombre</label>
+              <input class="form-input" type="text" placeholder="Tu nombre" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Apellidos</label>
+              <input class="form-input" type="text" placeholder="Tus apellidos" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" placeholder="tu@email.com" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Fecha de nacimiento</label>
+              <input class="form-input" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sexo biológico <span>(opcional)</span></label>
+              <select class="form-input">
+                <option value="">Prefiero no indicar</option>
+                <option>Masculino</option>
+                <option>Femenino</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section-label">Preguntas del estudio</div>
+
+          <!-- Configurable fields set by researcher -->
+          <div class="form-group">
+            <label class="form-label">¿Practicas deporte habitualmente?</label>
+            <div class="bool-input">
+              <button class="bool-btn selected" onclick="toggleBool(this, 'sport')">Sí</button>
+              <button class="bool-btn" onclick="toggleBool(this, 'sport')">No</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nivel de actividad física habitual</label>
+            <select class="form-input">
+              <option value="">Selecciona una opción...</option>
+              <option>Sedentario (menos de 1 vez por semana)</option>
+              <option>Moderado (1–3 veces por semana)</option>
+              <option>Activo (4–5 veces por semana)</option>
+              <option>Muy activo (más de 5 veces por semana)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">¿Tienes alguna condición médica relevante? <span>(opcional)</span></label>
+            <textarea class="form-input" rows="2" placeholder="Indica cualquier condición que el investigador deba conocer..." style="resize:none"></textarea>
+          </div>
+
+        </div>
+        <div class="form-footer">
+          <span class="step-counter">Paso 1 de 3</span>
+          <button class="form-next" onclick="goToStep(2)">
+            Continuar
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Cuestionario inicial (pretest) ── -->
+    <div id="step-2" style="display:none">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-title">Cuestionario inicial — Pretest</div>
+          <div class="form-card-sub">Responde con sinceridad. No hay respuestas correctas o incorrectas.</div>
+        </div>
+        <div class="form-body">
+
+          <div class="form-group">
+            <label class="form-label">¿Cuántas horas duermes de media por noche? <span style="color:#F87171">*</span></label>
+            <input class="form-input" type="number" min="0" max="24" placeholder="Horas (ej: 7)" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Valora tu nivel de concentración durante el día del 1 al 10 <span style="color:#F87171">*</span></label>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray);margin-bottom:8px">
+              <span>Muy bajo</span><span>Muy alto</span>
+            </div>
+            <div class="scale-input">
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">1</button>
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">2</button>
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">3</button>
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">4</button>
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">5</button>
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">6</button>
+              <button class="scale-btn selected" onclick="selectScale(this, 'conc')">7</button>
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">8</button>
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">9</button>
+              <button class="scale-btn" onclick="selectScale(this, 'conc')">10</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">¿Has realizado actividad física esta semana? <span style="color:#F87171">*</span></label>
+            <div class="bool-input">
+              <button class="bool-btn" onclick="toggleBool(this, 'activity')">Sí</button>
+              <button class="bool-btn" onclick="toggleBool(this, 'activity')">No</button>
+            </div>
+          </div>
+
+        </div>
+        <div class="form-footer">
+          <button class="form-back" onclick="goToStep(1)">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Volver
+          </button>
+          <div style="display:flex;align-items:center;gap:16px">
+            <span class="step-counter">Paso 2 de 3</span>
+            <button class="form-next" onclick="goToStep(3)">
+              Revisar y confirmar
+              <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Confirmación y cuenta opcional ── -->
+    <div id="step-3" style="display:none">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-title">Revisa y confirma tu inscripción</div>
+          <div class="form-card-sub">Comprueba que tus datos son correctos antes de enviar.</div>
+        </div>
+        <div class="form-body">
+
+          <div class="form-section-label">Resumen de tus datos</div>
+
+          <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px">
+              <span style="color:var(--gray)">Nombre</span><span style="color:var(--white);font-weight:500">Ana García López</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px">
+              <span style="color:var(--gray)">Email</span><span style="color:var(--white);font-weight:500">ana@email.com</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px">
+              <span style="color:var(--gray)">Actividad física habitual</span><span style="color:var(--white);font-weight:500">Moderado</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px">
+              <span style="color:var(--gray)">Horas de sueño (pretest)</span><span style="color:var(--white);font-weight:500">7 horas</span>
+            </div>
+          </div>
+
+          <div class="form-section-label">Crear cuenta para acceder más adelante</div>
+
+          <div style="background:rgba(108,77,230,0.06);border:1px solid rgba(108,77,230,0.2);border-radius:12px;padding:16px;margin-bottom:6px">
+            <div style="font-size:13.5px;font-weight:600;color:var(--white);margin-bottom:5px">Accede a tus cuestionarios cuando quieras</div>
+            <div style="font-size:12.5px;color:var(--gray);line-height:1.6;margin-bottom:14px">Crea una contraseña para poder iniciar sesión en las próximas fases del estudio sin necesitar el enlace de invitación de nuevo.</div>
+            <div class="form-group" style="margin-bottom:12px">
+              <label class="form-label">Contraseña</label>
+              <input class="form-input" type="password" placeholder="Mínimo 8 caracteres" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Repite la contraseña</label>
+              <input class="form-input" type="password" placeholder="Repite la contraseña" />
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--gray2);margin-bottom:18px;padding:0 4px">Este paso es opcional. Si no creas una contraseña, podrás acceder a tus cuestionarios solo desde el enlace de invitación original.</div>
+
+          <div style="font-size:12px;color:var(--gray);line-height:1.65">
+            Al confirmar tu inscripción, aceptas que tus datos sean utilizados exclusivamente para los fines de este estudio, de acuerdo con nuestra <span style="color:var(--violet2);cursor:pointer">política de privacidad</span> y el RGPD.
+          </div>
+
+        </div>
+        <div class="form-footer">
+          <button class="form-back" onclick="goToStep(2)">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Volver
+          </button>
+          <div style="display:flex;align-items:center;gap:16px">
+            <span class="step-counter">Paso 3 de 3</span>
+            <button class="form-next finish" onclick="showSuccess()">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Confirmar inscripción
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUCCESS ── -->
+    <div id="success" style="display:none">
+      <div class="form-card">
+        <div class="success-screen" style="display:block">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="success-title">Inscripción confirmada</div>
+          <div class="success-sub">Ya formas parte del estudio. El investigador ha sido notificado de tu participación.</div>
+
+          <div class="success-details">
+            <div class="success-detail-row">
+              <span class="success-detail-key">Estudio</span>
+              <span class="success-detail-val">Efecto del ejercicio físico...</span>
+            </div>
+            <div class="success-detail-row">
+              <span class="success-detail-key">Fase actual</span>
+              <span class="success-detail-val" style="color:var(--cyan)">Pretest — activa</span>
+            </div>
+            <div class="success-detail-row">
+              <span class="success-detail-key">Siguiente fase</span>
+              <span class="success-detail-val">Intervención — 26 abr 2026</span>
+            </div>
+            <div class="success-detail-row">
+              <span class="success-detail-key">Confirmación enviada a</span>
+              <span class="success-detail-val">ana@email.com</span>
+            </div>
+          </div>
+
+          <button class="btn-login">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Ir a mi panel de participante
+          </button>
+          <button class="btn-skip-login" onclick="alert('Cerrando sesión...')">Salir sin crear cuenta</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- / Right -->
+
+</div>
+
+<script>
+// ─── CANVAS ──────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let particles = [], W, H;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+for (let i = 0; i < 55; i++) particles.push({ x: Math.random()*1920, y: Math.random()*1080, vx: (Math.random()-0.5)*0.22, vy: (Math.random()-0.5)*0.22, r: Math.random()*1.6+0.6 });
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(108,77,230,0.6)'; ctx.fill();
+  });
+  for (let i = 0; i < particles.length; i++) for (let j = i+1; j < particles.length; j++) {
+    const dx = particles[i].x-particles[j].x, dy = particles[i].y-particles[j].y, d = Math.sqrt(dx*dx+dy*dy);
+    if (d < 110) { ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle = `rgba(0,212,170,${(1-d/110)*0.22})`; ctx.lineWidth=0.6; ctx.stroke(); }
+  }
+  requestAnimationFrame(draw);
+}
+draw();
+
+// ─── STEPS ───────────────────────────────────────────────────────────────────
+let current = 1;
+
+function goToStep(n) {
+  document.getElementById('step-' + current).style.display = 'none';
+  current = n;
+  document.getElementById('step-' + n).style.display = 'block';
+  updateIndicators();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showSuccess() {
+  document.getElementById('step-3').style.display = 'none';
+  document.getElementById('step-indicators').style.display = 'none';
+  document.querySelectorAll('.step-labels')[0].style.display = 'none';
+  document.getElementById('success').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateIndicators() {
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('dot-' + i);
+    const lbl = document.getElementById('lbl-' + i);
+    if (i < current) {
+      dot.className = 'step-dot done';
+      dot.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else if (i === current) {
+      dot.className = 'step-dot active';
+      dot.textContent = i;
+      lbl.className = 'step-label-item active';
+    } else {
+      dot.className = 'step-dot pending';
+      dot.textContent = i;
+      lbl.className = 'step-label-item';
+    }
+  }
+  for (let i = 1; i <= 2; i++) {
+    document.getElementById('line-' + i).className = 'step-line' + (i < current ? ' done' : '');
+  }
+}
+
+// ─── INTERACTIONS ─────────────────────────────────────────────────────────────
+function selectScale(btn, group) {
+  btn.closest('.scale-input').querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function toggleBool(btn, group) {
+  btn.closest('.bool-input').querySelectorAll('.bool-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function selectMC(option) {
+  option.closest('.mc-input').querySelectorAll('.mc-option').forEach(o => o.classList.remove('selected'));
+  option.classList.add('selected');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empiria — Error</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:      #080F1E;
+      --surface: #0D1729;
+      --card:    #111E35;
+      --border:  rgba(255,255,255,0.07);
+      --violet:  #6C4DE6;
+      --violet-d:#5538CC;
+      --cyan:    #00D4AA;
+      --cyan-d:  #00B891;
+      --text:    #E8EEF8;
+      --muted:   #6B7A99;
+      --danger:  #E05C6B;
+      --warn:    #F0A500;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* CANVAS */
+    #particle-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* HEADER */
+    .header { position: fixed; top: 0; left: 0; right: 0; z-index: 10; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(8,15,30,.7); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .logo { font-size: 18px; font-weight: 700; letter-spacing: -.5px; }
+    .logo span { color: var(--cyan); }
+
+    /* DEV SWITCHER — only for prototype demo */
+    .dev-bar { display: flex; gap: 6px; align-items: center; }
+    .dev-label { font-size: 11px; color: var(--muted); margin-right: 4px; }
+    .dev-btn { font-size: 11px; font-weight: 500; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; white-space: nowrap; }
+    .dev-btn:hover { color: var(--text); border-color: rgba(255,255,255,.2); }
+    .dev-btn.active { background: rgba(108,77,230,.15); border-color: rgba(108,77,230,.4); color: #A78BF9; }
+
+    /* MAIN */
+    .main { position: relative; z-index: 1; flex: 1; display: flex; align-items: center; justify-content: center; padding: 80px 24px 60px; }
+
+    .error-panel { width: 100%; max-width: 520px; text-align: center; }
+
+    /* Error icon */
+    .error-icon-wrap { margin: 0 auto 32px; display: flex; align-items: center; justify-content: center; }
+    .error-icon { width: 88px; height: 88px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .icon-404    { background: rgba(108,77,230,.12); border: 2px solid rgba(108,77,230,.3); }
+    .icon-token  { background: rgba(240,165,0,.1);   border: 2px solid rgba(240,165,0,.25); }
+    .icon-denied { background: rgba(224,92,107,.1);  border: 2px solid rgba(224,92,107,.25); }
+    .icon-gone   { background: rgba(96,165,250,.1);  border: 2px solid rgba(96,165,250,.25); }
+    .icon-server { background: rgba(255,255,255,.06); border: 2px solid rgba(255,255,255,.12); }
+
+    /* Glitch number */
+    .error-code { font-size: 80px; font-weight: 800; line-height: 1; margin-bottom: 4px; letter-spacing: -4px; background: linear-gradient(135deg, var(--violet), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .error-token-code { font-size: 56px; font-weight: 800; line-height: 1; margin-bottom: 4px; letter-spacing: -2px; color: var(--warn); }
+    .error-denied-code { font-size: 56px; font-weight: 800; line-height: 1; margin-bottom: 4px; letter-spacing: -2px; color: var(--danger); }
+
+    .error-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+    .error-desc  { font-size: 15px; color: var(--muted); line-height: 1.65; margin-bottom: 32px; max-width: 380px; margin-left: auto; margin-right: auto; }
+
+    /* Actions */
+    .error-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .btn-primary { background: linear-gradient(135deg, var(--violet), var(--violet-d)); color: white; border: none; padding: 12px 28px; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; box-shadow: 0 4px 16px rgba(108,77,230,.3); display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(108,77,230,.45); }
+    .btn-cyan { background: linear-gradient(135deg, var(--cyan), var(--cyan-d)); color: #080F1E; border: none; padding: 12px 28px; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; box-shadow: 0 4px 16px rgba(0,212,170,.25); display: inline-flex; align-items: center; gap: 8px; }
+    .btn-cyan:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(0,212,170,.4); }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 11px 24px; border-radius: 9px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+    .error-link { font-size: 13px; color: var(--muted); cursor: pointer; transition: color .2s; }
+    .error-link:hover { color: var(--text); }
+    .error-link a { color: inherit; text-decoration: underline; }
+
+    /* Detail card */
+    .detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin: 0 auto 28px; max-width: 400px; text-align: left; }
+    .detail-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 13px; }
+    .detail-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .detail-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .di-warn   { background: rgba(240,165,0,.12); color: var(--warn); }
+    .di-cyan   { background: rgba(0,212,170,.1); color: var(--cyan); }
+    .di-muted  { background: rgba(255,255,255,.06); color: var(--muted); }
+    .di-violet { background: rgba(108,77,230,.15); color: #A78BF9; }
+    .detail-label { color: var(--muted); font-size: 11px; }
+    .detail-val   { color: var(--text); font-weight: 500; font-size: 13px; }
+
+    /* Countdown */
+    .countdown-row { display: flex; gap: 12px; justify-content: center; margin-bottom: 28px; }
+    .countdown-unit { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; text-align: center; min-width: 64px; }
+    .countdown-val { font-size: 28px; font-weight: 700; color: var(--warn); line-height: 1; }
+    .countdown-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* Support */
+    .support-note { font-size: 12px; color: var(--muted); margin-top: 20px; }
+    .support-note a { color: var(--violet); text-decoration: none; }
+    .support-note a:hover { text-decoration: underline; }
+
+    /* Page selector — visible only in prototype mode */
+    .page-selector-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(8,15,30,.95); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: center; gap: 10px; backdrop-filter: blur(12px); }
+    .ps-label { font-size: 11px; color: var(--muted); margin-right: 4px; font-weight: 500; }
+
+    /* Animations */
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .float { animation: float 4s ease-in-out infinite; }
+    @keyframes shake { 0%,100%{transform:rotate(0)} 20%,60%{transform:rotate(-4deg)} 40%,80%{transform:rotate(4deg)} }
+    .shake { animation: shake .5s ease-in-out; }
+    @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(224,92,107,.4)} 70%{box-shadow:0 0 0 16px rgba(224,92,107,0)} 100%{box-shadow:0 0 0 0 rgba(224,92,107,0)} }
+    .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+  </style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">Empiri<span>a</span></div>
+  <div class="dev-bar">
+    <span class="dev-label">Prototipo —</span>
+    <button class="dev-btn active" onclick="showPage('404')">404</button>
+    <button class="dev-btn" onclick="showPage('token')">Token expirado</button>
+    <button class="dev-btn" onclick="showPage('denied')">Acceso denegado</button>
+    <button class="dev-btn" onclick="showPage('gone')">Experimento no encontrado</button>
+    <button class="dev-btn" onclick="showPage('server')">Error del servidor</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ── 404 ── -->
+  <div class="error-panel" id="page-404">
+    <div class="error-icon-wrap">
+      <div class="error-icon icon-404 float">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="url(#g404)" stroke-width="1.5">
+          <defs><linearGradient id="g404" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6C4DE6"/><stop offset="1" stop-color="#00D4AA"/></linearGradient></defs>
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+      </div>
+    </div>
+    <div class="error-code">404</div>
+    <h1 class="error-title">Pagina no encontrada</h1>
+    <p class="error-desc">La pagina que buscas no existe, ha sido movida o la URL esta escrita incorrectamente.</p>
+    <div class="error-actions">
+      <button class="btn-primary" onclick="window.location.href='dashboard-researcher.html'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Volver al inicio
+      </button>
+      <button class="btn-ghost" onclick="history.back()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Pagina anterior
+      </button>
+    </div>
+    <div class="support-note" style="margin-top:24px">
+      Si crees que esto es un error, <a href="#">contacta con soporte</a>.
+    </div>
+  </div>
+
+  <!-- ── TOKEN EXPIRADO ── -->
+  <div class="error-panel" id="page-token" style="display:none">
+    <div class="error-icon-wrap">
+      <div class="error-icon icon-token float">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+    </div>
+    <div class="error-token-code">Enlace expirado</div>
+    <h1 class="error-title">Este enlace de invitacion ya no es valido</h1>
+    <p class="error-desc">El enlace de invitacion tiene un tiempo de validez limitado o ya ha sido utilizado. Ponte en contacto con el investigador para recibir un nuevo enlace.</p>
+
+    <div class="detail-card">
+      <div class="detail-row">
+        <div class="detail-icon di-warn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="detail-label">Enlace expirado el</div>
+          <div class="detail-val">9 de abril de 2026, 23:59</div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon di-violet">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        </div>
+        <div>
+          <div class="detail-label">Estudio</div>
+          <div class="detail-val">Efecto del ejercicio fisico en el bienestar cognitivo</div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon di-cyan">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <div class="detail-label">Investigador</div>
+          <div class="detail-val">Carlos Romero — Universitat de Barcelona</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="error-actions">
+      <button class="btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Solicitar nuevo enlace al investigador
+      </button>
+      <span class="error-link" onclick="window.location.href='landing-prototype.html'">Volver a Empiria</span>
+    </div>
+    <div class="support-note" style="margin-top:20px">
+      Si ya tienes una cuenta, puedes <a href="#">iniciar sesion aqui</a>.
+    </div>
+  </div>
+
+  <!-- ── ACCESO DENEGADO ── -->
+  <div class="error-panel" id="page-denied" style="display:none">
+    <div class="error-icon-wrap">
+      <div class="error-icon icon-denied pulse-ring">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+    </div>
+    <div class="error-denied-code">403</div>
+    <h1 class="error-title">No tienes acceso a esta seccion</h1>
+    <p class="error-desc">Tu cuenta no tiene los permisos necesarios para ver esta pagina. Si crees que deberias tener acceso, contacta con el administrador del estudio.</p>
+
+    <div class="detail-card">
+      <div class="detail-row">
+        <div class="detail-icon" style="background:rgba(224,92,107,.1);color:var(--danger)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <div class="detail-label">Tu rol</div>
+          <div class="detail-val">Participante</div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon" style="background:rgba(96,165,250,.1);color:#60A5FA">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <div class="detail-label">Requiere</div>
+          <div class="detail-val">Rol de Investigador o Administrador</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="error-actions">
+      <button class="btn-primary" onclick="window.location.href='participant-dashboard.html'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Ir a mi panel
+      </button>
+      <button class="btn-ghost">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Cerrar sesion
+      </button>
+    </div>
+  </div>
+
+  <!-- ── EXPERIMENTO NO ENCONTRADO ── -->
+  <div class="error-panel" id="page-gone" style="display:none">
+    <div class="error-icon-wrap">
+      <div class="error-icon icon-gone float">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="1.5">
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/>
+          <line x1="17" y1="14" x2="23" y2="14" stroke="var(--danger)"/>
+          <line x1="20" y1="11" x2="20" y2="17" stroke="var(--danger)"/>
+        </svg>
+      </div>
+    </div>
+    <h1 class="error-title" style="font-size:26px;margin-bottom:10px">Este experimento no existe o ya no esta disponible</h1>
+    <p class="error-desc">El experimento al que intentas acceder ha sido eliminado, cancelado o la URL no es correcta.</p>
+
+    <div class="detail-card">
+      <div class="detail-row">
+        <div class="detail-icon di-muted">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </div>
+        <div>
+          <div class="detail-label">Posibles causas</div>
+          <div class="detail-val">El experimento fue cancelado o eliminado por el investigador</div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon di-cyan">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="detail-label">El enlace pudo haber funcionado hasta</div>
+          <div class="detail-val">Fecha desconocida</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="error-actions">
+      <button class="btn-primary" onclick="window.location.href='participant-dashboard.html'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Ver mis estudios activos
+      </button>
+      <button class="btn-ghost" onclick="window.location.href='landing-prototype.html'">Volver a Empiria</button>
+    </div>
+    <div class="support-note" style="margin-top:20px">
+      Si crees que este experimento deberia estar activo, <a href="#">contacta al investigador</a>.
+    </div>
+  </div>
+
+  <!-- ── ERROR DEL SERVIDOR ── -->
+  <div class="error-panel" id="page-server" style="display:none">
+    <div class="error-icon-wrap">
+      <div class="error-icon icon-server float">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5">
+          <line x1="22" y1="12" x2="2" y2="12"/>
+          <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+          <line x1="6" y1="16" x2="6.01" y2="16"/>
+          <line x1="10" y1="16" x2="10.01" y2="16"/>
+        </svg>
+      </div>
+    </div>
+    <div class="error-code">500</div>
+    <h1 class="error-title">Algo ha ido mal en el servidor</h1>
+    <p class="error-desc">Hemos registrado el error automaticamente. Nuestro equipo ya esta trabajando en solucionarlo. Por favor, intentalo de nuevo en unos minutos.</p>
+
+    <div class="detail-card" style="text-align:left;margin-bottom:28px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600;margin-bottom:10px">Estado del sistema</div>
+      <div class="detail-row">
+        <div class="detail-icon" style="background:rgba(0,212,170,.1);color:var(--cyan)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div><div class="detail-val">Base de datos</div><div class="detail-label">Operativa</div></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon" style="background:rgba(0,212,170,.1);color:var(--cyan)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div><div class="detail-val">Autenticacion</div><div class="detail-label">Operativa</div></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon" style="background:rgba(224,92,107,.1);color:var(--danger)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+        <div><div class="detail-val">API de respuestas</div><div class="detail-label" style="color:var(--danger)">Degradada</div></div>
+      </div>
+    </div>
+
+    <div class="error-actions">
+      <button class="btn-primary" onclick="retryPage()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Intentar de nuevo
+      </button>
+      <button class="btn-ghost" onclick="window.location.href='dashboard-researcher.html'">Volver al inicio</button>
+    </div>
+    <div class="support-note" style="margin-top:20px">
+      Referencia del error: <code style="font-family:monospace;color:var(--muted);font-size:11px">ERR_500_API_RESPONSES_20260411</code>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Page switcher (prototype only) ──
+function showPage(id) {
+  ['404','token','denied','gone','server'].forEach(p => {
+    document.getElementById('page-' + p).style.display = p === id ? '' : 'none';
+  });
+  document.querySelectorAll('.dev-btn').forEach((b, i) => {
+    const ids = ['404','token','denied','gone','server'];
+    b.classList.toggle('active', ids[i] === id);
+  });
+}
+
+function retryPage() {
+  const btn = event.currentTarget;
+  const origHTML = btn.innerHTML;
+  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Reintentando...`;
+  btn.disabled = true;
+  setTimeout(() => { btn.innerHTML = origHTML; btn.disabled = false; }, 2200);
+}
+
+// ── Particle canvas ──
+(function() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles;
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function init() {
+    resize();
+    const count = Math.floor((W * H) / 22000);
+    particles = Array.from({ length: count }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3,
+      r: Math.random() * 1.5 + .5
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(108,77,230,0.35)'; ctx.fill();
+    });
+    for (let i = 0; i < particles.length; i++)
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(108,77,230,${0.1*(1-d/120)})`;
+          ctx.lineWidth = .5; ctx.stroke();
+        }
+      }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', init);
+  init(); draw();
+})();
+
+// Spin keyframe for retry
+const style = document.createElement('style');
+style.textContent = `@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
