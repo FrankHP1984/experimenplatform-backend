@@ -33,17 +33,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Set;
 
 @Service
 public class ExperimentService {
 
-    private static final Map<ExperimentStatus, Set<ExperimentStatus>> VALID_TRANSITIONS = Map.of(
-            ExperimentStatus.DRAFT, Set.of(ExperimentStatus.ACTIVE),
-            ExperimentStatus.ACTIVE, Set.of(ExperimentStatus.FINISHED),
-            ExperimentStatus.FINISHED, Set.of()
-    );
+    // Validaciones de transiciones de estado
+    // DRAFT -> ACTIVE -> FINISHED (no se puede volver atrás)
 
     private final ExperimentRepository experimentRepository;
     private final UserRepository userRepository;
@@ -327,10 +322,17 @@ public class ExperimentService {
         if (currentStatus == newStatus) {
             return;
         }
-        Set<ExperimentStatus> allowed = VALID_TRANSITIONS.get(currentStatus);
-        if (allowed == null || !allowed.contains(newStatus)) {
-            throw new BadRequestException(
-                    "Invalid status transition from " + currentStatus + " to " + newStatus);
+        // Validar transiciones permitidas
+        if (currentStatus == ExperimentStatus.DRAFT && newStatus != ExperimentStatus.ACTIVE) {
+            throw new BadRequestException("Un experimento en borrador solo puede activarse");
+        }
+        
+        if (currentStatus == ExperimentStatus.ACTIVE && newStatus != ExperimentStatus.FINISHED) {
+            throw new BadRequestException("Un experimento activo solo puede finalizarse");
+        }
+        
+        if (currentStatus == ExperimentStatus.FINISHED) {
+            throw new BadRequestException("No se puede cambiar el estado de un experimento finalizado");
         }
     }
 
