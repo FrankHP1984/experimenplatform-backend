@@ -182,7 +182,7 @@ class EnrollmentServiceTest {
         Experiment otroExperimento = new Experiment();
         otroExperimento.setId(99L);
 
-        Group grupoDiferente = new Group("Control", "desc", otroExperimento);
+        Group grupoDiferente = new Group("Control", "desc", null, otroExperimento);
         grupoDiferente.setId(5L);
 
         EnrollParticipantRequest request = new EnrollParticipantRequest();

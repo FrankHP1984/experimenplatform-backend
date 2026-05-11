@@ -1,0 +1,119 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------< com.research:experimentplatform >-------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:4.0.4:run (default-cli) > test-compile @ experimentplatform >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ experimentplatform ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ experimentplatform ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 98 source files with javac [debug parameters release 21] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] /C:/proyectos/experimentplatform/experimenplatform-backend/src/main/java/com/research/experimentplatform/security/SupabaseAuthenticationFilter.java: C:\proyectos\experimentplatform\experimenplatform-backend\src\main\java\com\research\experimentplatform\security\SupabaseAuthenticationFilter.java uses or overrides a deprecated API.
+[INFO] /C:/proyectos/experimentplatform/experimenplatform-backend/src/main/java/com/research/experimentplatform/security/SupabaseAuthenticationFilter.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ experimentplatform ---
+[INFO] skip non existing resourceDirectory C:\proyectos\experimentplatform\experimenplatform-backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ experimentplatform ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 4 source files with javac [debug parameters release 21] to target\test-classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] <<< spring-boot:4.0.4:run (default-cli) < test-compile @ experimentplatform <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:4.0.4:run (default-cli) @ experimentplatform ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.4)
+
+2026-05-11T15:33:40.708+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] c.r.e.ExperimentplatformApplication      : Starting ExperimentplatformApplication using Java 21.0.10 with PID 33072 (C:\proyectos\experimentplatform\experimenplatform-backend\target\classes started by franc in C:\proyectos\experimentplatform\experimenplatform-backend)
+2026-05-11T15:33:40.715+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] c.r.e.ExperimentplatformApplication      : No active profile set, falling back to 1 default profile: "default"
+2026-05-11T15:33:40.817+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-05-11T15:33:40.818+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-05-11T15:33:42.289+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-11T15:33:42.429+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 124 ms. Found 13 JPA repository interfaces.
+2026-05-11T15:33:43.964+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-11T15:33:44.015+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-11T15:33:44.016+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-05-11T15:33:44.152+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 3333 ms
+2026-05-11T15:33:44.510+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-11T15:33:44.691+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.7.Final
+2026-05-11T15:33:46.200+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-11T15:33:46.288+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-05-11T15:33:47.490+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@54e9b330
+2026-05-11T15:33:47.493+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-05-11T15:33:47.611+02:00  WARN 33072 --- [experimentplatform] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-11T15:33:47.825+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 17.6
+	Default catalog/schema: postgres/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-11T15:33:50.788+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-11T15:33:51.376+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-11T15:33:51.534+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-11T15:33:52.819+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] c.r.e.s.SupabaseAuthenticationFilter     : Clave pública EC cargada desde JWKS: https://bdmncyrdpmorxhhmepeq.supabase.co
+2026-05-11T15:33:55.102+02:00  WARN 33072 --- [experimentplatform] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-05-11T15:33:55.282+02:00  WARN 33072 --- [experimentplatform] [  restartedMain] .s.a.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: a096df3f-7ece-4ea8-b469-7bb51d21e632
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-05-11T15:33:55.304+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-05-11T15:33:56.823+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-05-11T15:33:56.835+02:00  INFO 33072 --- [experimentplatform] [  restartedMain] c.r.e.ExperimentplatformApplication      : Started ExperimentplatformApplication in 16.614 seconds (process running for 17.214)
+2026-05-11T15:33:59.130+02:00  INFO 33072 --- [experimentplatform] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-11T15:33:59.132+02:00  INFO 33072 --- [experimentplatform] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-11T15:33:59.134+02:00  INFO 33072 --- [experimentplatform] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-05-11T15:33:59.600+02:00  INFO 33072 --- [experimentplatform] [nio-8080-exec-1] c.r.e.s.SupabaseAuthenticationFilter     : Autenticación OK para: richardrobertson75@proton.me
+2026-05-11T15:38:05.202+02:00  INFO 33072 --- [experimentplatform] [nio-8080-exec-2] c.r.e.s.SupabaseAuthenticationFilter     : Autenticación OK para: fhermosopulido@gmail.com
+2026-05-11T15:38:11.241+02:00  INFO 33072 --- [experimentplatform] [nio-8080-exec-3] c.r.e.s.SupabaseAuthenticationFilter     : Autenticación OK para: fhermosopulido@gmail.com
+2026-05-11T15:38:14.601+02:00  INFO 33072 --- [experimentplatform] [nio-8080-exec-4] c.r.e.s.SupabaseAuthenticationFilter     : Autenticación OK para: fhermosopulido@gmail.com
+2026-05-11T15:38:18.823+02:00  INFO 33072 --- [experimentplatform] [nio-8080-exec-5] c.r.e.s.SupabaseAuthenticationFilter     : Autenticación OK para: fhermosopulido@gmail.com
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  14:58 min
+[INFO] Finished at: 2026-05-11T15:48:20+02:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:4.0.4:run (default-cli) on project experimentplatform: Process terminated with exit code: -1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

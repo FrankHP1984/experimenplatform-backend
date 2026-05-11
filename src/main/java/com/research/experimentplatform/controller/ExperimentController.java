@@ -3,6 +3,7 @@ package com.research.experimentplatform.controller;
 import com.research.experimentplatform.dto.CreateExperimentRequest;
 import com.research.experimentplatform.dto.CreateGroupRequest;
 import com.research.experimentplatform.dto.CreatePhaseRequest;
+import com.research.experimentplatform.dto.UpdatePhaseRequest;
 import com.research.experimentplatform.dto.ExperimentDTO;
 import com.research.experimentplatform.dto.GroupDTO;
 import com.research.experimentplatform.dto.PhaseDTO;
@@ -23,7 +24,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import com.research.experimentplatform.model.ExperimentStatus;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/experiments")
@@ -86,6 +89,19 @@ public class ExperimentController {
         return ResponseEntity.ok(experiment);
     }
 
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('RESEARCHER', 'ADMIN')")
+    public ResponseEntity<ExperimentDTO> patchStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        String supabaseId = (String) authentication.getDetails();
+        ExperimentStatus status = ExperimentStatus.valueOf(body.get("status"));
+        UpdateExperimentRequest request = new UpdateExperimentRequest(
+                null, null, null, null, null, status, null, null, null, null);
+        return ResponseEntity.ok(experimentService.updateExperiment(id, request, supabaseId));
+    }
+
     @PostMapping("/{id}/finish")
     @PreAuthorize("hasAnyRole('RESEARCHER', 'ADMIN')")
     public ResponseEntity<ExperimentDTO> finishExperiment(
@@ -135,6 +151,16 @@ public class ExperimentController {
         return ResponseEntity.ok(groups);
     }
 
+    @PutMapping("/groups/{groupId}")
+    @PreAuthorize("hasAnyRole('RESEARCHER', 'ADMIN')")
+    public ResponseEntity<GroupDTO> updateGroup(
+            @PathVariable Long groupId,
+            @Valid @RequestBody CreateGroupRequest request,
+            Authentication authentication) {
+        String supabaseId = (String) authentication.getDetails();
+        return ResponseEntity.ok(groupService.updateGroup(groupId, request, supabaseId));
+    }
+
     @DeleteMapping("/groups/{groupId}")
     @PreAuthorize("hasAnyRole('RESEARCHER', 'ADMIN')")
     public ResponseEntity<Void> deleteGroup(
@@ -160,6 +186,16 @@ public class ExperimentController {
     public ResponseEntity<List<PhaseDTO>> getPhases(@PathVariable Long experimentId) {
         List<PhaseDTO> phases = phaseService.getPhasesByExperiment(experimentId);
         return ResponseEntity.ok(phases);
+    }
+
+    @PutMapping("/phases/{phaseId}")
+    @PreAuthorize("hasAnyRole('RESEARCHER', 'ADMIN')")
+    public ResponseEntity<PhaseDTO> updatePhase(
+            @PathVariable Long phaseId,
+            @Valid @RequestBody UpdatePhaseRequest request,
+            Authentication authentication) {
+        String supabaseId = (String) authentication.getDetails();
+        return ResponseEntity.ok(phaseService.updatePhase(phaseId, request, supabaseId));
     }
 
     @DeleteMapping("/phases/{phaseId}")

@@ -61,7 +61,7 @@ class ExperimentServiceTest {
     void createExperiment_datosCorrectos_devuelveExperimentoEnDraft() {
         CreateExperimentRequest request = new CreateExperimentRequest(
                 "Mi experimento", "Descripción", DesignType.PRETEST_POSTTEST,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
         when(userRepository.findBySupabaseId("supa-inv-1")).thenReturn(Optional.of(investigador));
         when(experimentRepository.save(any(Experiment.class))).thenAnswer(i -> {
@@ -81,7 +81,7 @@ class ExperimentServiceTest {
     void createExperiment_conTextoDeConsentimiento_loGuardaEnElExperimento() {
         CreateExperimentRequest request = new CreateExperimentRequest(
                 "Experimento con contrato", null, DesignType.BETWEEN_SUBJECTS,
-                null, null, "Texto del contrato de participación.", null, null);
+                null, null, "Texto del contrato de participación.", null, null, null);
 
         when(userRepository.findBySupabaseId("supa-inv-1")).thenReturn(Optional.of(investigador));
         when(experimentRepository.save(any(Experiment.class))).thenAnswer(i -> {
@@ -104,7 +104,7 @@ class ExperimentServiceTest {
         experimento.setId(1L);
 
         UpdateExperimentRequest request = new UpdateExperimentRequest(
-                null, null, null, null, null, ExperimentStatus.ACTIVE, null, null, null);
+                null, null, null, null, null, ExperimentStatus.ACTIVE, null, null, null, null);
 
         when(experimentRepository.findById(1L)).thenReturn(Optional.of(experimento));
         when(ownershipChecker.canModify(experimento, "supa-inv-1")).thenReturn(true);
@@ -125,7 +125,7 @@ class ExperimentServiceTest {
 
         // No se puede volver de ACTIVE a DRAFT
         UpdateExperimentRequest request = new UpdateExperimentRequest(
-                null, null, null, null, null, ExperimentStatus.DRAFT, null, null, null);
+                null, null, null, null, null, ExperimentStatus.DRAFT, null, null, null, null);
 
         when(experimentRepository.findById(1L)).thenReturn(Optional.of(experimento));
         when(ownershipChecker.canModify(experimento, "supa-inv-1")).thenReturn(true);
@@ -141,7 +141,7 @@ class ExperimentServiceTest {
         experimento.setId(1L);
 
         UpdateExperimentRequest request = new UpdateExperimentRequest(
-                null, null, null, null, null, ExperimentStatus.ACTIVE, null, null, null);
+                null, null, null, null, null, ExperimentStatus.ACTIVE, null, null, null, null);
 
         when(experimentRepository.findById(1L)).thenReturn(Optional.of(experimento));
         when(ownershipChecker.canModify(experimento, "supa-inv-1")).thenReturn(true);
@@ -157,7 +157,7 @@ class ExperimentServiceTest {
         experimento.setId(1L);
 
         UpdateExperimentRequest request = new UpdateExperimentRequest(
-                "Nuevo título", null, null, null, null, null, null, null, null);
+                "Nuevo título", null, null, null, null, null, null, null, null, null);
 
         when(experimentRepository.findById(1L)).thenReturn(Optional.of(experimento));
         when(ownershipChecker.canModify(experimento, "supa-otro")).thenReturn(false);

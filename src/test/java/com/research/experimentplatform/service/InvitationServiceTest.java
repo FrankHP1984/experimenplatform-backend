@@ -154,7 +154,7 @@ class InvitationServiceTest {
         invitacion.setStatus(InvitationStatus.PENDING);
         invitacion.setToken("token-valido");
 
-        AcceptInvitationRequest request = new AcceptInvitationRequest(true);
+        AcceptInvitationRequest request = new AcceptInvitationRequest(true, null, null, null, null);
 
         when(invitationRepository.findByToken("token-valido")).thenReturn(Optional.of(invitacion));
         when(userRepository.findBySupabaseId("supa-part-1")).thenReturn(Optional.of(participanteUser));
@@ -182,7 +182,7 @@ class InvitationServiceTest {
         invitacion.setToken("token-valido");
 
         // consentAgreed = false
-        AcceptInvitationRequest request = new AcceptInvitationRequest(false);
+        AcceptInvitationRequest request = new AcceptInvitationRequest(false, null, null, null, null);
 
         when(invitationRepository.findByToken("token-valido")).thenReturn(Optional.of(invitacion));
 
@@ -197,7 +197,7 @@ class InvitationServiceTest {
         invitacion.setStatus(InvitationStatus.PENDING);
         invitacion.setToken("token-valido");
 
-        AcceptInvitationRequest request = new AcceptInvitationRequest(true);
+        AcceptInvitationRequest request = new AcceptInvitationRequest(true, null, null, null, null);
 
         User otroUser = new User("supa-otro", "otro@test.com", UserRole.PARTICIPANT);
         otroUser.setId(99L);
@@ -217,7 +217,7 @@ class InvitationServiceTest {
         invitacion.setStatus(InvitationStatus.PENDING);
         invitacion.setToken("token-expirado");
 
-        AcceptInvitationRequest request = new AcceptInvitationRequest(true);
+        AcceptInvitationRequest request = new AcceptInvitationRequest(true, null, null, null, null);
 
         when(invitationRepository.findByToken("token-expirado")).thenReturn(Optional.of(invitacion));
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(i -> i.getArgument(0));
@@ -233,7 +233,7 @@ class InvitationServiceTest {
         invitacion.setStatus(InvitationStatus.ACCEPTED);
         invitacion.setToken("token-usado");
 
-        AcceptInvitationRequest request = new AcceptInvitationRequest(true);
+        AcceptInvitationRequest request = new AcceptInvitationRequest(true, null, null, null, null);
 
         when(invitationRepository.findByToken("token-usado")).thenReturn(Optional.of(invitacion));
 

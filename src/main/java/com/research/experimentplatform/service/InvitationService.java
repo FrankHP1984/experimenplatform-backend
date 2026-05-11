@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
 
 @Service
 public class InvitationService {
@@ -134,7 +135,7 @@ public class InvitationService {
         }
 
         Participant participant = participantRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Participant profile not found. Please create your participant profile first"));
+                .orElseGet(() -> participantRepository.save(new Participant(user)));
 
         Experiment experiment = invitation.getExperiment();
 
@@ -156,8 +157,10 @@ public class InvitationService {
         Enrollment enrollment = new Enrollment(participant, experiment, enrollmentStatus);
         enrollment.setConsentSignedAt(LocalDateTime.now());
 
-        if (invitation.getGroup() != null) {
-            enrollment.setGroup(invitation.getGroup());
+        List<Group> experimentGroups = groupRepository.findByExperimentId(experiment.getId());
+        if (!experimentGroups.isEmpty()) {
+            int randomIndex = new Random().nextInt(experimentGroups.size());
+            enrollment.setGroup(experimentGroups.get(randomIndex));
         }
 
         enrollmentRepository.save(enrollment);

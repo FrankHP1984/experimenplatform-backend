@@ -23,6 +23,11 @@ public class EnrollmentController {
         this.enrollmentService = enrollmentService;
     }
 
+    @GetMapping("/{enrollmentId}")
+    public ResponseEntity<EnrollmentDTO> getEnrollment(@PathVariable Long enrollmentId) {
+        return ResponseEntity.ok(enrollmentService.getEnrollmentById(enrollmentId));
+    }
+
     @PostMapping("/participants/{participantId}")
     @PreAuthorize("hasAnyRole('PARTICIPANT', 'ADMIN')")
     public ResponseEntity<EnrollmentDTO> enrollInExperiment(
@@ -63,6 +68,25 @@ public class EnrollmentController {
             @PathVariable Long enrollmentId,
             @RequestParam EnrollmentStatus status) {
         EnrollmentDTO enrollment = enrollmentService.updateEnrollmentStatus(enrollmentId, status);
+        return ResponseEntity.ok(enrollment);
+    }
+
+    @PatchMapping("/{enrollmentId}/group")
+    @PreAuthorize("hasAnyRole('RESEARCHER', 'ADMIN')")
+    public ResponseEntity<EnrollmentDTO> assignGroup(
+            @PathVariable Long enrollmentId,
+            @RequestParam(required = false) Long groupId) {
+        EnrollmentDTO enrollment = enrollmentService.assignGroup(enrollmentId, groupId);
+        return ResponseEntity.ok(enrollment);
+    }
+
+    @PutMapping("/{enrollmentId}/complete")
+    @PreAuthorize("hasAnyRole('PARTICIPANT', 'ADMIN')")
+    public ResponseEntity<EnrollmentDTO> completeEnrollment(
+            @PathVariable Long enrollmentId,
+            Authentication authentication) {
+        String supabaseId = (String) authentication.getDetails();
+        EnrollmentDTO enrollment = enrollmentService.completeEnrollment(enrollmentId, supabaseId);
         return ResponseEntity.ok(enrollment);
     }
 

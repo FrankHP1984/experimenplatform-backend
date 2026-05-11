@@ -41,10 +41,27 @@ public class GroupService {
         Group group = new Group();
         group.setName(request.getName());
         group.setDescription(request.getDescription());
+        group.setColor(request.getColor());
         group.setExperiment(experiment);
 
         Group savedGroup = groupRepository.save(group);
         return convertToDTO(savedGroup);
+    }
+
+    @Transactional
+    public GroupDTO updateGroup(Long groupId, CreateGroupRequest request, String supabaseId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        if (!ownershipChecker.canModify(group.getExperiment(), supabaseId)) {
+            throw new ForbiddenException("You do not have permission to modify this experiment");
+        }
+
+        group.setName(request.getName());
+        group.setDescription(request.getDescription());
+        group.setColor(request.getColor());
+
+        return convertToDTO(groupRepository.save(group));
     }
 
     public List<GroupDTO> getGroupsByExperiment(Long experimentId) {
@@ -74,6 +91,7 @@ public class GroupService {
                 group.getId(),
                 group.getName(),
                 group.getDescription(),
+                group.getColor(),
                 group.getExperiment().getId()
         );
     }

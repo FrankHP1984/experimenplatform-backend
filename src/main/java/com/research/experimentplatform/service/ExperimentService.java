@@ -3,8 +3,11 @@ package com.research.experimentplatform.service;
 import com.research.experimentplatform.dto.CreateExperimentRequest;
 import com.research.experimentplatform.dto.ExperimentDTO;
 import com.research.experimentplatform.dto.UpdateExperimentRequest;
+import com.research.experimentplatform.model.DesignType;
 import com.research.experimentplatform.model.Experiment;
 import com.research.experimentplatform.model.ExperimentStatus;
+import com.research.experimentplatform.model.Group;
+import com.research.experimentplatform.model.Phase;
 import com.research.experimentplatform.model.User;
 import com.research.experimentplatform.model.UserRole;
 import com.research.experimentplatform.exception.BadRequestException;
@@ -16,7 +19,9 @@ import com.research.experimentplatform.model.Organization;
 import com.research.experimentplatform.model.ResearchTeam;
 import com.research.experimentplatform.repository.EnrollmentRepository;
 import com.research.experimentplatform.repository.ExperimentRepository;
+import com.research.experimentplatform.repository.GroupRepository;
 import com.research.experimentplatform.repository.OrganizationRepository;
+import com.research.experimentplatform.repository.PhaseRepository;
 import com.research.experimentplatform.repository.ResearchTeamRepository;
 import com.research.experimentplatform.repository.UserRepository;
 
@@ -43,6 +48,8 @@ public class ExperimentService {
     private final ExperimentRepository experimentRepository;
     private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
+    private final PhaseRepository phaseRepository;
+    private final GroupRepository groupRepository;
     private final ResearchTeamRepository researchTeamRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final OwnershipChecker ownershipChecker;
@@ -50,12 +57,16 @@ public class ExperimentService {
     public ExperimentService(ExperimentRepository experimentRepository,
                              UserRepository userRepository,
                              OrganizationRepository organizationRepository,
+                             PhaseRepository phaseRepository,
+                             GroupRepository groupRepository,
                              ResearchTeamRepository researchTeamRepository,
                              EnrollmentRepository enrollmentRepository,
                              OwnershipChecker ownershipChecker) {
         this.experimentRepository = experimentRepository;
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
+        this.phaseRepository = phaseRepository;
+        this.groupRepository = groupRepository;
         this.researchTeamRepository = researchTeamRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.ownershipChecker = ownershipChecker;
@@ -186,6 +197,7 @@ public class ExperimentService {
             validateStatusTransition(experiment.getStatus(), request.status());
             // Si el experimento pasa a ACTIVE, activamos todas las inscripciones que estaban esperando
             if (request.status() == ExperimentStatus.ACTIVE) {
+                validateDesignTypeForActivation(experiment);
                 List<Enrollment> pending = enrollmentRepository.findByExperimentIdAndStatus(
                         experiment.getId(), EnrollmentStatus.PENDING);
                 for (Enrollment e : pending) {
@@ -256,6 +268,52 @@ public class ExperimentService {
     private void validateOwnership(Experiment experiment, String supabaseId) {
         if (!ownershipChecker.canModify(experiment, supabaseId)) {
             throw new ForbiddenException("You do not have permission to modify this experiment");
+        }
+    }
+
+    private void validateDesignTypeForActivation(Experiment experiment) {
+        if (experiment.getDesignType() == null) return;
+
+        List<Phase> phases = phaseRepository.findByExperimentId(experiment.getId());
+        int count = phases.size();
+        DesignType type = experiment.getDesignType();
+
+        if (type == DesignType.CROSS_SECTIONAL) {
+            if (count != 1) {
+                throw new BadRequestException(
+                        "Un diseño transversal (Cross-Sectional) requiere exactamente 1 fase. " +
+                        "Actualmente tiene " + count + ".");
+            }
+        } else if (type == DesignType.PRETEST_POSTTEST) {
+            if (count != 2) {
+                throw new BadRequestException(
+                        "Un diseño Pretest-Postest requiere exactamente 2 fases (pretest y postest). " +
+                        "Actualmente tiene " + count + ".");
+            }
+        } else if (type == DesignType.LONGITUDINAL) {
+            if (count < 2) {
+                throw new BadRequestException(
+                        "Un diseño longitudinal requiere al menos 2 fases. " +
+                        "Actualmente tiene " + count + ".");
+            }
+            boolean allHaveDates = phases.stream().allMatch(p -> p.getStartDate() != null);
+            if (!allHaveDates) {
+                throw new BadRequestException(
+                        "En un diseño longitudinal todas las fases deben tener fecha de inicio configurada.");
+            }
+        } else if (type == DesignType.BETWEEN_SUBJECTS) {
+            List<Group> groups = groupRepository.findByExperimentId(experiment.getId());
+            if (groups.size() < 2) {
+                throw new BadRequestException(
+                        "Un diseño entre grupos requiere al menos 2 grupos. " +
+                        "Actualmente tiene " + groups.size() + ".");
+            }
+            boolean allGroupsHavePhase = groups.stream().allMatch(g ->
+                    phases.stream().anyMatch(p -> p.getGroup() != null && p.getGroup().getId().equals(g.getId())));
+            if (!allGroupsHavePhase) {
+                throw new BadRequestException(
+                        "En un diseño entre grupos cada grupo debe tener al menos una fase asignada.");
+            }
         }
     }
 

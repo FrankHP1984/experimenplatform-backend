@@ -2,14 +2,17 @@ package com.research.experimentplatform.service;
 
 import com.research.experimentplatform.dto.CreatePhaseRequest;
 import com.research.experimentplatform.dto.PhaseDTO;
+import com.research.experimentplatform.dto.UpdatePhaseRequest;
 import com.research.experimentplatform.exception.BadRequestException;
-import com.research.experimentplatform.model.DesignType;
 import com.research.experimentplatform.model.Experiment;
+import com.research.experimentplatform.model.Group;
 import com.research.experimentplatform.model.Phase;
 import com.research.experimentplatform.exception.ForbiddenException;
 import com.research.experimentplatform.exception.ResourceNotFoundException;
 import com.research.experimentplatform.repository.ExperimentRepository;
+import com.research.experimentplatform.repository.GroupRepository;
 import com.research.experimentplatform.repository.PhaseRepository;
+import com.research.experimentplatform.repository.QuestionRepository;
 import com.research.experimentplatform.security.OwnershipChecker;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +26,17 @@ public class PhaseService {
 
     private final PhaseRepository phaseRepository;
     private final ExperimentRepository experimentRepository;
+    private final GroupRepository groupRepository;
+    private final QuestionRepository questionRepository;
     private final OwnershipChecker ownershipChecker;
 
     public PhaseService(PhaseRepository phaseRepository, ExperimentRepository experimentRepository,
+                        GroupRepository groupRepository, QuestionRepository questionRepository,
                         OwnershipChecker ownershipChecker) {
         this.phaseRepository = phaseRepository;
         this.experimentRepository = experimentRepository;
+        this.groupRepository = groupRepository;
+        this.questionRepository = questionRepository;
         this.ownershipChecker = ownershipChecker;
     }
 
@@ -53,6 +61,15 @@ public class PhaseService {
         phase.setEndDate(request.getEndDate());
         phase.setExperiment(experiment);
 
+        if (request.getGroupId() != null) {
+            Group group = groupRepository.findById(request.getGroupId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+            if (!group.getExperiment().getId().equals(experimentId)) {
+                throw new BadRequestException("Group does not belong to this experiment");
+            }
+            phase.setGroup(group);
+        }
+
         Phase savedPhase = phaseRepository.save(phase);
         return convertToDTO(savedPhase);
     }
@@ -70,6 +87,57 @@ public class PhaseService {
     }
 
     @Transactional
+    public PhaseDTO updatePhase(Long phaseId, UpdatePhaseRequest request, String supabaseId) {
+        Phase phase = phaseRepository.findById(phaseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Phase not found"));
+
+        if (!ownershipChecker.canModify(phase.getExperiment(), supabaseId)) {
+            throw new ForbiddenException("You do not have permission to modify this experiment");
+        }
+
+        Experiment experiment = phase.getExperiment();
+
+        if (request.getStartDate() != null && request.getEndDate() != null
+                && !request.getEndDate().isAfter(request.getStartDate())) {
+            throw new BadRequestException("End date must be after start date");
+        }
+
+        if (experiment.getStartDate() != null && request.getStartDate() != null
+                && request.getStartDate().isBefore(experiment.getStartDate())) {
+            throw new BadRequestException("Phase start date cannot be before experiment start date");
+        }
+        if (experiment.getEndDate() != null && request.getEndDate() != null
+                && request.getEndDate().isAfter(experiment.getEndDate())) {
+            throw new BadRequestException("Phase end date cannot be after experiment end date");
+        }
+
+        int newOrder = request.getPhaseOrder() != null ? request.getPhaseOrder() : phase.getPhaseOrder();
+        if (newOrder != phase.getPhaseOrder()) {
+            validatePhaseOrderUnique(experiment.getId(), newOrder, phaseId);
+        }
+
+        validateNoOverlap(experiment.getId(), request.getStartDate(), request.getEndDate(), phaseId);
+
+        phase.setName(request.getName());
+        phase.setPhaseOrder(newOrder);
+        phase.setStartDate(request.getStartDate());
+        phase.setEndDate(request.getEndDate());
+
+        if (request.isClearGroup()) {
+            phase.setGroup(null);
+        } else if (request.getGroupId() != null) {
+            Group group = groupRepository.findById(request.getGroupId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+            if (!group.getExperiment().getId().equals(phase.getExperiment().getId())) {
+                throw new BadRequestException("Group does not belong to this experiment");
+            }
+            phase.setGroup(group);
+        }
+
+        return convertToDTO(phaseRepository.save(phase));
+    }
+
+    @Transactional
     public void deletePhase(Long id, String supabaseId) {
         Phase phase = phaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Phase not found"));
@@ -83,19 +151,9 @@ public class PhaseService {
     // La fecha de fin es siempre opcional: el investigador puede dejar la fase abierta
     // y cerrarla manualmente cuando finalice el experimento.
     private void validatePhaseDates(Experiment experiment, CreatePhaseRequest request) {
-        boolean requiresDates = experiment.getDesignType() == DesignType.LONGITUDINAL
-                || experiment.getDesignType() == DesignType.PRETEST_POSTTEST
-                || experiment.getDesignType() == DesignType.BETWEEN_SUBJECTS;
-
-        if (requiresDates && request.getStartDate() == null) {
-            throw new BadRequestException("Phases in " + experiment.getDesignType()
-                    + " experiments must have a start date");
-        }
-
-        if (request.getStartDate() != null && request.getEndDate() != null) {
-            if (!request.getEndDate().isAfter(request.getStartDate())) {
-                throw new BadRequestException("End date must be after start date");
-            }
+        if (request.getStartDate() != null && request.getEndDate() != null
+                && !request.getEndDate().isAfter(request.getStartDate())) {
+            throw new BadRequestException("End date must be after start date");
         }
     }
 
@@ -151,7 +209,10 @@ public class PhaseService {
                 phase.getPhaseOrder(),
                 phase.getStartDate(),
                 phase.getEndDate(),
-                phase.getExperiment().getId()
+                phase.getExperiment().getId(),
+                questionRepository.countByPhaseId(phase.getId()),
+                phase.getGroup() != null ? phase.getGroup().getId() : null,
+                phase.getGroup() != null ? phase.getGroup().getName() : null
         );
     }
 }

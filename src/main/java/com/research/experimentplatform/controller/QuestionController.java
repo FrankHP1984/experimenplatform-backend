@@ -1,6 +1,7 @@
 package com.research.experimentplatform.controller;
 
 import com.research.experimentplatform.dto.CreateQuestionRequest;
+import com.research.experimentplatform.dto.UpdateQuestionRequest;
 import com.research.experimentplatform.dto.QuestionDTO;
 import com.research.experimentplatform.dto.ResponseDTO;
 import com.research.experimentplatform.dto.SubmitResponseRequest;
@@ -54,7 +55,7 @@ public class QuestionController {
     @PreAuthorize("hasAnyRole('RESEARCHER', 'ADMIN')")
     public ResponseEntity<QuestionDTO> updateQuestion(
             @PathVariable Long id,
-            @Valid @RequestBody CreateQuestionRequest request,
+            @Valid @RequestBody UpdateQuestionRequest request,
             Authentication authentication) {
         String supabaseId = (String) authentication.getDetails();
         QuestionDTO question = questionService.updateQuestion(id, request, supabaseId);

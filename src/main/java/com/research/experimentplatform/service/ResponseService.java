@@ -2,6 +2,7 @@ package com.research.experimentplatform.service;
 
 import com.research.experimentplatform.dto.ResponseDTO;
 import com.research.experimentplatform.dto.SubmitResponseRequest;
+import com.research.experimentplatform.model.DesignType;
 import com.research.experimentplatform.model.Enrollment;
 import com.research.experimentplatform.model.EnrollmentStatus;
 import com.research.experimentplatform.model.Question;
@@ -14,6 +15,7 @@ import com.research.experimentplatform.repository.ResponseRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,6 +57,27 @@ public class ResponseService {
         Long questionExperimentId = question.getPhase().getExperiment().getId();
         if (!enrollmentExperimentId.equals(questionExperimentId)) {
             throw new BadRequestException("Question does not belong to the enrollment's experiment");
+        }
+
+        // Validamos que la fase esté dentro de su ventana temporal
+        LocalDateTime now = LocalDateTime.now();
+        var phase = question.getPhase();
+        if (phase.getStartDate() != null && phase.getStartDate().isAfter(now)) {
+            throw new BadRequestException("This phase has not started yet");
+        }
+        if (phase.getEndDate() != null && phase.getEndDate().isBefore(now)) {
+            throw new BadRequestException("This phase has already ended");
+        }
+
+        // Validación Between-Subjects: la fase debe ser común o pertenecer al grupo del participante
+        if (enrollment.getExperiment().getDesignType() == DesignType.BETWEEN_SUBJECTS) {
+            if (phase.getGroup() != null) {
+                Long phaseGroupId = phase.getGroup().getId();
+                Long participantGroupId = enrollment.getGroup() != null ? enrollment.getGroup().getId() : null;
+                if (!phaseGroupId.equals(participantGroupId)) {
+                    throw new BadRequestException("This phase does not belong to your assigned group");
+                }
+            }
         }
 
         // Buscamos si ya existe una respuesta para esta pregunta y esta inscripción

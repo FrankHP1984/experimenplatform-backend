@@ -1,6 +1,7 @@
 package com.research.experimentplatform.service;
 
 import com.research.experimentplatform.dto.CreateQuestionRequest;
+import com.research.experimentplatform.dto.UpdateQuestionRequest;
 import com.research.experimentplatform.dto.QuestionDTO;
 import com.research.experimentplatform.exception.BadRequestException;
 import com.research.experimentplatform.model.Phase;
@@ -69,7 +70,7 @@ public class QuestionService {
     }
 
     @Transactional
-    public QuestionDTO updateQuestion(Long id, CreateQuestionRequest request, String supabaseId) {
+    public QuestionDTO updateQuestion(Long id, UpdateQuestionRequest request, String supabaseId) {
         Question question = questionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
 
@@ -78,21 +79,14 @@ public class QuestionService {
         }
 
         if (request.getText() != null) question.setText(request.getText());
-        if (request.getType() != null) {
-            // Al cambiar el tipo puede que las restricciones del nuevo tipo no se cumplan;
-            // construimos un request efectivo con los valores que quedarán tras el update para validar
-            CreateQuestionRequest effective = buildEffectiveRequest(question, request);
-            validateQuestionTypeConstraints(effective);
-            question.setType(request.getType());
-        }
+        if (request.getType() != null) question.setType(request.getType());
         if (request.getOptions() != null) question.setOptions(request.getOptions());
         if (request.getMinValue() != null) question.setMinValue(request.getMinValue());
         if (request.getMaxValue() != null) question.setMaxValue(request.getMaxValue());
         if (request.getRequired() != null) question.setRequired(request.getRequired());
         if (request.getQuestionOrder() != null) question.setQuestionOrder(request.getQuestionOrder());
 
-        Question updatedQuestion = questionRepository.save(question);
-        return convertToDTO(updatedQuestion);
+        return convertToDTO(questionRepository.save(question));
     }
 
     @Transactional
@@ -116,38 +110,6 @@ public class QuestionService {
                 throw new BadRequestException("SCALE questions must define both minValue and maxValue");
             }
         }
-    }
-
-    // Construye un request efectivo fusionando los valores actuales de la pregunta con los
-    // del request de actualización, para poder validar el estado resultante completo.
-    private CreateQuestionRequest buildEffectiveRequest(Question current, CreateQuestionRequest update) {
-        CreateQuestionRequest effective = new CreateQuestionRequest();
-
-        if (update.getType() != null) {
-            effective.setType(update.getType());
-        } else {
-            effective.setType(current.getType());
-        }
-
-        if (update.getOptions() != null) {
-            effective.setOptions(update.getOptions());
-        } else {
-            effective.setOptions(current.getOptions());
-        }
-
-        if (update.getMinValue() != null) {
-            effective.setMinValue(update.getMinValue());
-        } else {
-            effective.setMinValue(current.getMinValue());
-        }
-
-        if (update.getMaxValue() != null) {
-            effective.setMaxValue(update.getMaxValue());
-        } else {
-            effective.setMaxValue(current.getMaxValue());
-        }
-
-        return effective;
     }
 
     public long countQuestionsByPhase(Long phaseId) {

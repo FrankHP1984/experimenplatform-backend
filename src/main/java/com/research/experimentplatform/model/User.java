@@ -31,19 +31,20 @@ public class User {
     @JoinColumn(name = "organization_id")
     private Organization organization;
 
-    // Profile fields
     private String firstName;
     private String lastName;
     private String institution;
     private String department;
     private String position;
-    
+
     @Column(length = 1000)
     private String bio;
-    
+
     private String orcidId;
     private String language;
     private String timezone;
+    private String researchArea;
+    private String preferredDesign;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

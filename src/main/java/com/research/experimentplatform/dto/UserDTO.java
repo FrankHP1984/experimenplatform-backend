@@ -14,5 +14,7 @@ public record UserDTO(
     String bio,
     String orcidId,
     String language,
-    String timezone
+    String timezone,
+    String researchArea,
+    String preferredDesign
 ) {}

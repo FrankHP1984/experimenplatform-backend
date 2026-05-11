@@ -135,6 +135,12 @@ public class EnrollmentService {
                 .map(this::toDTO);
     }
 
+    public EnrollmentDTO getEnrollmentById(Long enrollmentId) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
+        return toDTO(enrollment);
+    }
+
     public Page<EnrollmentDTO> getExperimentEnrollments(Long experimentId, Pageable pageable) {
         return enrollmentRepository.findByExperimentId(experimentId, pageable)
                 .map(this::toDTO);
@@ -166,6 +172,46 @@ public class EnrollmentService {
 
         enrollment.setStatus(EnrollmentStatus.WITHDRAWN);
         enrollmentRepository.save(enrollment);
+    }
+
+    @Transactional
+    public EnrollmentDTO assignGroup(Long enrollmentId, Long groupId) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
+
+        if (groupId == null) {
+            enrollment.setGroup(null);
+        } else {
+            Group group = groupRepository.findById(groupId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+            if (!group.getExperiment().getId().equals(enrollment.getExperiment().getId())) {
+                throw new BadRequestException("Group does not belong to this experiment");
+            }
+            enrollment.setGroup(group);
+        }
+
+        return toDTO(enrollmentRepository.save(enrollment));
+    }
+
+    @Transactional
+    public EnrollmentDTO completeEnrollment(Long enrollmentId, String supabaseId) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
+
+        User user = userRepository.findBySupabaseId(supabaseId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Participant participant = participantRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Participant not found"));
+
+        if (!enrollment.getParticipant().getId().equals(participant.getId())) {
+            throw new ForbiddenException("You can only complete your own enrollments");
+        }
+
+        validateStatusTransition(enrollment.getStatus(), EnrollmentStatus.COMPLETED);
+        enrollment.setStatus(EnrollmentStatus.COMPLETED);
+        enrollment.setCompletedAt(LocalDateTime.now());
+
+        return toDTO(enrollmentRepository.save(enrollment));
     }
 
     public long countActiveEnrollments(Long experimentId) {

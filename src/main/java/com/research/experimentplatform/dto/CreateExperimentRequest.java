@@ -1,7 +1,6 @@
 package com.research.experimentplatform.dto;
 
 import com.research.experimentplatform.model.DesignType;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -19,7 +18,6 @@ public record CreateExperimentRequest(
     @NotNull(message = "Design type is required")
     DesignType designType,
 
-    @FutureOrPresent(message = "Start date must be today or in the future")
     LocalDateTime startDate,
     LocalDateTime endDate,
 

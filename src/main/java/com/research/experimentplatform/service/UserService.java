@@ -1,5 +1,6 @@
 package com.research.experimentplatform.service;
 
+import com.research.experimentplatform.dto.UpdateUserRequest;
 import com.research.experimentplatform.dto.UserDTO;
 import com.research.experimentplatform.exception.ResourceNotFoundException;
 import com.research.experimentplatform.model.User;
@@ -38,17 +39,32 @@ public class UserService {
     public record SyncResult(UserDTO user, boolean created) {}
 
     @Transactional
-    public SyncResult syncUser(String supabaseId, String email, UserRole role) {
-        return userRepository.findBySupabaseId(supabaseId)
-                .map(existing -> {
-                    // El rol no se actualiza en syncs posteriores — es una operación de admin
-                    existing.setEmail(email);
-                    return new SyncResult(convertToDTO(userRepository.save(existing)), false);
-                })
-                .orElseGet(() -> {
-                    User newUser = new User(supabaseId, email, role != null ? role : UserRole.PARTICIPANT);
-                    return new SyncResult(convertToDTO(userRepository.save(newUser)), true);
-                });
+    public SyncResult syncUser(String supabaseId, String email, UserRole role, String firstName, String lastName) {
+        Optional<User> bySupabaseId = userRepository.findBySupabaseId(supabaseId);
+        if (bySupabaseId.isPresent()) {
+            User existing = bySupabaseId.get();
+            existing.setEmail(email);
+            if (role != null) existing.setRole(role);
+            if (firstName != null && existing.getFirstName() == null) existing.setFirstName(firstName);
+            if (lastName  != null && existing.getLastName()  == null) existing.setLastName(lastName);
+            return new SyncResult(convertToDTO(userRepository.save(existing)), false);
+        }
+
+        // El mismo email puede existir ya (registro previo parcial): enlazar el supabaseId en vez de duplicar
+        Optional<User> byEmail = userRepository.findByEmail(email);
+        if (byEmail.isPresent()) {
+            User existing = byEmail.get();
+            existing.setSupabaseId(supabaseId);
+            if (role != null) existing.setRole(role);
+            if (firstName != null && existing.getFirstName() == null) existing.setFirstName(firstName);
+            if (lastName  != null && existing.getLastName()  == null) existing.setLastName(lastName);
+            return new SyncResult(convertToDTO(userRepository.save(existing)), false);
+        }
+
+        User newUser = new User(supabaseId, email, role != null ? role : UserRole.PARTICIPANT);
+        newUser.setFirstName(firstName);
+        newUser.setLastName(lastName);
+        return new SyncResult(convertToDTO(userRepository.save(newUser)), true);
     }
 
     public Page<UserDTO> getAllUsers(Pageable pageable) {
@@ -72,20 +88,24 @@ public class UserService {
     }
 
     @Transactional
-    public UserDTO updateProfile(String supabaseId, com.research.experimentplatform.dto.UpdateUserProfileRequest request) {
+    public UserDTO updateMe(String supabaseId, UpdateUserRequest req) {
         User user = userRepository.findBySupabaseId(supabaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        if (request.firstName() != null) user.setFirstName(request.firstName());
-        if (request.lastName() != null) user.setLastName(request.lastName());
-        if (request.institution() != null) user.setInstitution(request.institution());
-        if (request.department() != null) user.setDepartment(request.department());
-        if (request.position() != null) user.setPosition(request.position());
-        if (request.bio() != null) user.setBio(request.bio());
-        if (request.orcidId() != null) user.setOrcidId(request.orcidId());
-        if (request.language() != null) user.setLanguage(request.language());
-        if (request.timezone() != null) user.setTimezone(request.timezone());
-        
+
+        if (req.firstName() != null) { user.setFirstName(req.firstName()); }
+        if (req.name() != null && req.firstName() == null) { user.setFirstName(req.name()); }
+        if (req.lastName() != null) { user.setLastName(req.lastName()); }
+        if (req.institution() != null) { user.setInstitution(req.institution()); }
+        if (req.department() != null) { user.setDepartment(req.department()); }
+        if (req.position() != null) { user.setPosition(req.position()); }
+        if (req.roleTitle() != null && req.position() == null) { user.setPosition(req.roleTitle()); }
+        if (req.bio() != null) { user.setBio(req.bio()); }
+        if (req.orcidId() != null) { user.setOrcidId(req.orcidId()); }
+        if (req.language() != null) { user.setLanguage(req.language()); }
+        if (req.timezone() != null) { user.setTimezone(req.timezone()); }
+        if (req.researchArea() != null) { user.setResearchArea(req.researchArea()); }
+        if (req.preferredDesign() != null) { user.setPreferredDesign(req.preferredDesign()); }
+
         return convertToDTO(userRepository.save(user));
     }
 
@@ -102,7 +122,9 @@ public class UserService {
             user.getBio(),
             user.getOrcidId(),
             user.getLanguage(),
-            user.getTimezone()
+            user.getTimezone(),
+            user.getResearchArea(),
+            user.getPreferredDesign()
         );
     }
 }

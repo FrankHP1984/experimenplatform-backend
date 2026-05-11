@@ -33,6 +33,10 @@ public class Phase {
     @JoinColumn(name = "experiment_id", nullable = false)
     private Experiment experiment;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Group group;
+
     @OneToMany(mappedBy = "phase", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> questions = new ArrayList<>();
 
