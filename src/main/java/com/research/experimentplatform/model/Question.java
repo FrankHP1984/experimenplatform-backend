@@ -44,6 +44,12 @@ public class Question {
     @Column(nullable = false)
     private Integer questionOrder;
 
+    @Column(nullable = false)
+    private boolean attentionCheck = false;
+
+    @Column(length = 500)
+    private String expectedAnswer;
+
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Response> responses = new ArrayList<>();
 

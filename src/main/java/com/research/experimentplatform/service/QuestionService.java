@@ -11,6 +11,7 @@ import com.research.experimentplatform.exception.ForbiddenException;
 import com.research.experimentplatform.exception.ResourceNotFoundException;
 import com.research.experimentplatform.repository.PhaseRepository;
 import com.research.experimentplatform.repository.QuestionRepository;
+import com.research.experimentplatform.repository.ResponseRepository;
 import com.research.experimentplatform.security.OwnershipChecker;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +24,14 @@ public class QuestionService {
 
     private final QuestionRepository questionRepository;
     private final PhaseRepository phaseRepository;
+    private final ResponseRepository responseRepository;
     private final OwnershipChecker ownershipChecker;
 
     public QuestionService(QuestionRepository questionRepository, PhaseRepository phaseRepository,
-                           OwnershipChecker ownershipChecker) {
+                           ResponseRepository responseRepository, OwnershipChecker ownershipChecker) {
         this.questionRepository = questionRepository;
         this.phaseRepository = phaseRepository;
+        this.responseRepository = responseRepository;
         this.ownershipChecker = ownershipChecker;
     }
 
@@ -39,6 +42,10 @@ public class QuestionService {
 
         if (!ownershipChecker.canModify(phase.getExperiment(), supabaseId)) {
             throw new ForbiddenException("You do not have permission to modify this experiment");
+        }
+
+        if (responseRepository.existsByQuestionPhaseExperimentId(phase.getExperiment().getId())) {
+            throw new BadRequestException("No se pueden añadir preguntas cuando el experimento ya tiene respuestas.");
         }
 
         validateQuestionTypeConstraints(request);
@@ -52,6 +59,8 @@ public class QuestionService {
         question.setRequired(request.getRequired() != null ? request.getRequired() : false);
         question.setPhase(phase);
         question.setQuestionOrder(request.getQuestionOrder());
+        if (request.getAttentionCheck() != null) question.setAttentionCheck(request.getAttentionCheck());
+        question.setExpectedAnswer(request.getExpectedAnswer());
 
         Question savedQuestion = questionRepository.save(question);
         return convertToDTO(savedQuestion);
@@ -78,6 +87,10 @@ public class QuestionService {
             throw new ForbiddenException("You do not have permission to modify this experiment");
         }
 
+        if (responseRepository.existsByQuestionPhaseExperimentId(question.getPhase().getExperiment().getId())) {
+            throw new BadRequestException("No se pueden modificar preguntas cuando el experimento ya tiene respuestas.");
+        }
+
         if (request.getText() != null) question.setText(request.getText());
         if (request.getType() != null) question.setType(request.getType());
         if (request.getOptions() != null) question.setOptions(request.getOptions());
@@ -85,6 +98,8 @@ public class QuestionService {
         if (request.getMaxValue() != null) question.setMaxValue(request.getMaxValue());
         if (request.getRequired() != null) question.setRequired(request.getRequired());
         if (request.getQuestionOrder() != null) question.setQuestionOrder(request.getQuestionOrder());
+        if (request.getAttentionCheck() != null) question.setAttentionCheck(request.getAttentionCheck());
+        if (request.getExpectedAnswer() != null) question.setExpectedAnswer(request.getExpectedAnswer());
 
         return convertToDTO(questionRepository.save(question));
     }
@@ -96,6 +111,11 @@ public class QuestionService {
         if (!ownershipChecker.canModify(question.getPhase().getExperiment(), supabaseId)) {
             throw new ForbiddenException("You do not have permission to modify this experiment");
         }
+
+        if (responseRepository.existsByQuestionPhaseExperimentId(question.getPhase().getExperiment().getId())) {
+            throw new BadRequestException("No se pueden eliminar preguntas cuando el experimento ya tiene respuestas.");
+        }
+
         questionRepository.delete(question);
     }
 
@@ -126,7 +146,9 @@ public class QuestionService {
                 question.getMaxValue(),
                 question.getRequired(),
                 question.getPhase().getId(),
-                question.getQuestionOrder()
+                question.getQuestionOrder(),
+                question.isAttentionCheck(),
+                question.getExpectedAnswer()
         );
     }
 }

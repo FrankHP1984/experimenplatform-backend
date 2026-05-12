@@ -14,13 +14,16 @@ public class QuestionDTO {
     private Boolean required;
     private Long phaseId;
     private Integer questionOrder;
+    private boolean attentionCheck;
+    private String expectedAnswer;
 
     public QuestionDTO() {
     }
 
     public QuestionDTO(Long id, String text, QuestionType type, List<String> options,
                        Integer minValue, Integer maxValue, Boolean required,
-                       Long phaseId, Integer questionOrder) {
+                       Long phaseId, Integer questionOrder,
+                       boolean attentionCheck, String expectedAnswer) {
         this.id = id;
         this.text = text;
         this.type = type;
@@ -30,6 +33,8 @@ public class QuestionDTO {
         this.required = required;
         this.phaseId = phaseId;
         this.questionOrder = questionOrder;
+        this.attentionCheck = attentionCheck;
+        this.expectedAnswer = expectedAnswer;
     }
 
     public Long getId() {
@@ -102,5 +107,21 @@ public class QuestionDTO {
 
     public void setQuestionOrder(Integer questionOrder) {
         this.questionOrder = questionOrder;
+    }
+
+    public boolean isAttentionCheck() {
+        return attentionCheck;
+    }
+
+    public void setAttentionCheck(boolean attentionCheck) {
+        this.attentionCheck = attentionCheck;
+    }
+
+    public String getExpectedAnswer() {
+        return expectedAnswer;
+    }
+
+    public void setExpectedAnswer(String expectedAnswer) {
+        this.expectedAnswer = expectedAnswer;
     }
 }

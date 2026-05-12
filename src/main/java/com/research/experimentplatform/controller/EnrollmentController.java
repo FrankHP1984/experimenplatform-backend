@@ -90,10 +90,24 @@ public class EnrollmentController {
         return ResponseEntity.ok(enrollment);
     }
 
+    @PatchMapping("/{enrollmentId}/consent")
+    @PreAuthorize("hasAnyRole('PARTICIPANT', 'ADMIN')")
+    public ResponseEntity<EnrollmentDTO> signConsent(@PathVariable Long enrollmentId) {
+        EnrollmentDTO enrollment = enrollmentService.signConsent(enrollmentId);
+        return ResponseEntity.ok(enrollment);
+    }
+
     @DeleteMapping("/{enrollmentId}")
     @PreAuthorize("hasAnyRole('PARTICIPANT', 'ADMIN')")
     public ResponseEntity<Void> withdrawEnrollment(@PathVariable Long enrollmentId) {
         enrollmentService.withdrawEnrollment(enrollmentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{enrollmentId}/data")
+    @PreAuthorize("hasAnyRole('PARTICIPANT', 'ADMIN', 'RESEARCHER')")
+    public ResponseEntity<Void> deleteParticipantData(@PathVariable Long enrollmentId) {
+        enrollmentService.deleteParticipantData(enrollmentId);
         return ResponseEntity.noContent().build();
     }
 }

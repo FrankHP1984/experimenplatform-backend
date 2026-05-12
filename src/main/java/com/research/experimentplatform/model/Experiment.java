@@ -28,6 +28,9 @@ public class Experiment {
     @Column(length = 5000)
     private String consentText;
 
+    @Column(length = 5000)
+    private String debriefingText;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DesignType designType;

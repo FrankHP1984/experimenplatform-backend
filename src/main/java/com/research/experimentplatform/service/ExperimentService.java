@@ -87,6 +87,7 @@ public class ExperimentService {
         experiment.setStatus(ExperimentStatus.DRAFT);
         experiment.setOwner(owner);
         experiment.setConsentText(request.consentText());
+        experiment.setDebriefingText(request.debriefingText());
         if (request.allowLateEnrollment() != null) {
             experiment.setAllowLateEnrollment(request.allowLateEnrollment());
         }
@@ -201,6 +202,9 @@ public class ExperimentService {
         if (request.consentText() != null) {
             experiment.setConsentText(request.consentText());
         }
+        if (request.debriefingText() != null) {
+            experiment.setDebriefingText(request.debriefingText());
+        }
         if (request.organizationId() != null) {
             Organization organization = organizationRepository.findById(request.organizationId())
                     .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
@@ -288,6 +292,12 @@ public class ExperimentService {
                 throw new BadRequestException(
                         "En un diseño longitudinal todas las fases deben tener fecha de inicio configurada.");
             }
+        } else if (type == DesignType.WITHIN_SUBJECTS) {
+            if (count < 2) {
+                throw new BadRequestException(
+                        "Un diseño intra sujeto requiere al menos 2 fases (condiciones). " +
+                        "Actualmente tiene " + count + ".");
+            }
         } else if (type == DesignType.BETWEEN_SUBJECTS) {
             List<Group> groups = groupRepository.findByExperimentId(experiment.getId());
             if (groups.size() < 2) {
@@ -353,6 +363,7 @@ public class ExperimentService {
                 experiment.getStatus(),
                 experiment.getOwner().getId(),
                 experiment.getConsentText(),
+                experiment.getDebriefingText(),
                 organizationId,
                 organizationName,
                 teamId,

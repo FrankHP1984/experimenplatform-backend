@@ -25,4 +25,8 @@ public interface ResponseRepository extends JpaRepository<Response, Long> {
     List<Response> findByExperimentId(@Param("experimentId") Long experimentId);
     
     boolean existsByEnrollmentIdAndQuestionId(Long enrollmentId, Long questionId);
+
+    boolean existsByQuestionPhaseExperimentId(Long experimentId);
+
+    void deleteByEnrollmentId(Long enrollmentId);
 }

@@ -93,4 +93,13 @@ public class CreateQuestionRequest {
     public void setQuestionOrder(Integer questionOrder) {
         this.questionOrder = questionOrder;
     }
+
+    private Boolean attentionCheck;
+    private String expectedAnswer;
+
+    public Boolean getAttentionCheck() { return attentionCheck; }
+    public void setAttentionCheck(Boolean attentionCheck) { this.attentionCheck = attentionCheck; }
+
+    public String getExpectedAnswer() { return expectedAnswer; }
+    public void setExpectedAnswer(String expectedAnswer) { this.expectedAnswer = expectedAnswer; }
 }

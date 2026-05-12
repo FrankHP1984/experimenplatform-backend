@@ -24,6 +24,9 @@ public record CreateExperimentRequest(
     @Size(max = 5000, message = "Consent text must not exceed 5000 characters")
     String consentText,
 
+    @Size(max = 5000, message = "Debriefing text must not exceed 5000 characters")
+    String debriefingText,
+
     Long organizationId,
 
     Long teamId,

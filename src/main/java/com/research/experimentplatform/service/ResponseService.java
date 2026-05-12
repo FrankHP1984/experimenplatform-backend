@@ -108,10 +108,45 @@ public class ResponseService {
             }
         }
 
-        // Si ya respondió antes, actualizamos; si no, creamos nueva respuesta
-        Response response = responseRepository
-                .findByEnrollmentIdAndQuestionId(enrollmentId, request.getQuestionId())
-                .orElse(new Response(enrollment, question));
+        // En WITHIN_SUBJECTS bloqueamos cada condición hasta que la anterior esté completamente respondida
+        if (enrollment.getExperiment().getDesignType() == DesignType.WITHIN_SUBJECTS) {
+            String secuencia = enrollment.getPhaseSequence();
+            if (secuencia != null && !secuencia.isBlank()) {
+                String[] partes = secuencia.split(",");
+
+                // Buscar en qué posición está la fase actual dentro de la secuencia del participante
+                int posicionActual = -1;
+                for (int i = 0; i < partes.length; i++) {
+                    if (partes[i].trim().equals(String.valueOf(phase.getId()))) {
+                        posicionActual = i;
+                        break;
+                    }
+                }
+
+                // Si no es la primera condición de su secuencia, verificar que la anterior esté completa
+                if (posicionActual > 0) {
+                    Long idFaseAnterior = Long.parseLong(partes[posicionActual - 1].trim());
+                    long totalPreguntas = questionRepository.countByPhaseId(idFaseAnterior);
+                    long respuestasDadas = responseRepository
+                            .findByEnrollmentIdAndPhaseId(enrollmentId, idFaseAnterior)
+                            .size();
+
+                    if (respuestasDadas < totalPreguntas) {
+                        Phase faseAnterior = phaseRepository.findById(idFaseAnterior).orElse(null);
+                        String nombreAnterior = faseAnterior != null ? faseAnterior.getName() : "la condición anterior";
+                        throw new BadRequestException(
+                                "Debes completar '" + nombreAnterior + "' antes de acceder a esta condición."
+                        );
+                    }
+                }
+            }
+        }
+
+        // Las respuestas son inmutables: si ya existe rechazamos
+        if (responseRepository.findByEnrollmentIdAndQuestionId(enrollmentId, request.getQuestionId()).isPresent()) {
+            throw new BadRequestException("Esta respuesta ya fue enviada. Las respuestas no pueden modificarse.");
+        }
+        Response response = new Response(enrollment, question);
 
         validateAndSetResponseValue(response, question, request);
 

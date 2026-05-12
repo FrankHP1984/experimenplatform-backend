@@ -20,6 +20,7 @@ import com.research.experimentplatform.repository.ExperimentRepository;
 import com.research.experimentplatform.repository.GroupRepository;
 import com.research.experimentplatform.repository.ParticipantRepository;
 import com.research.experimentplatform.repository.PhaseRepository;
+import com.research.experimentplatform.repository.ResponseRepository;
 import com.research.experimentplatform.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 @Service
@@ -47,6 +49,7 @@ public class EnrollmentService {
     private final ExperimentRepository experimentRepository;
     private final GroupRepository groupRepository;
     private final PhaseRepository phaseRepository;
+    private final ResponseRepository responseRepository;
     private final UserRepository userRepository;
 
     public EnrollmentService(EnrollmentRepository enrollmentRepository,
@@ -54,12 +57,14 @@ public class EnrollmentService {
                              ExperimentRepository experimentRepository,
                              GroupRepository groupRepository,
                              PhaseRepository phaseRepository,
+                             ResponseRepository responseRepository,
                              UserRepository userRepository) {
         this.enrollmentRepository = enrollmentRepository;
         this.participantRepository = participantRepository;
         this.experimentRepository = experimentRepository;
         this.groupRepository = groupRepository;
         this.phaseRepository = phaseRepository;
+        this.responseRepository = responseRepository;
         this.userRepository = userRepository;
     }
 
@@ -107,22 +112,12 @@ public class EnrollmentService {
             enrollment.setGroup(group);
 
         } else if (experiment.getDesignType() == DesignType.BETWEEN_SUBJECTS) {
-            // En Between-Subjects, si no se indicó grupo, asignamos al grupo con menos participantes
+            // En Between-Subjects, si no se indicó grupo, asignamos aleatoriamente
             List<Group> grupos = groupRepository.findByExperimentId(experiment.getId());
 
             if (!grupos.isEmpty()) {
-                Group grupoMasPequeno = null;
-                long minParticipantes = Long.MAX_VALUE;
-
-                for (Group g : grupos) {
-                    long cuenta = enrollmentRepository.countByGroupId(g.getId());
-                    if (cuenta < minParticipantes) {
-                        minParticipantes = cuenta;
-                        grupoMasPequeno = g;
-                    }
-                }
-
-                enrollment.setGroup(grupoMasPequeno);
+                int indiceAleatorio = new Random().nextInt(grupos.size());
+                enrollment.setGroup(grupos.get(indiceAleatorio));
             }
         }
 
@@ -250,6 +245,32 @@ public class EnrollmentService {
         enrollment.setCompletedAt(LocalDateTime.now());
 
         return toDTO(enrollmentRepository.save(enrollment));
+    }
+
+    @Transactional
+    public void deleteParticipantData(Long enrollmentId) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
+
+        // Borrar todas las respuestas de este participante en este experimento
+        responseRepository.deleteByEnrollmentId(enrollmentId);
+
+        // Marcar la inscripción como retirada
+        enrollment.setStatus(EnrollmentStatus.WITHDRAWN);
+        enrollmentRepository.save(enrollment);
+    }
+
+    @Transactional
+    public EnrollmentDTO signConsent(Long enrollmentId) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
+
+        if (enrollment.getConsentSignedAt() == null) {
+            enrollment.setConsentSignedAt(LocalDateTime.now());
+            enrollmentRepository.save(enrollment);
+        }
+
+        return toDTO(enrollment);
     }
 
     public long countActiveEnrollments(Long experimentId) {
