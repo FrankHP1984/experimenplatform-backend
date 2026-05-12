@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -159,15 +160,18 @@ public class PhaseService {
 
     // Las fechas de la fase deben estar dentro del rango del experimento (si este tiene fechas definidas).
     private void validatePhaseWithinExperimentRange(Experiment experiment, CreatePhaseRequest request) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         if (experiment.getStartDate() != null && request.getStartDate() != null
                 && request.getStartDate().isBefore(experiment.getStartDate())) {
             throw new BadRequestException(
-                    "La fecha de inicio de la fase no puede ser anterior a la del experimento (" + experiment.getStartDate() + ")");
+                    "La fecha de inicio de la fase no puede ser anterior a la del experimento (" 
+                    + experiment.getStartDate().format(formatter) + ")");
         }
         if (experiment.getEndDate() != null && request.getEndDate() != null
                 && request.getEndDate().isAfter(experiment.getEndDate())) {
             throw new BadRequestException(
-                    "La fecha de fin de la fase no puede ser posterior a la del experimento (" + experiment.getEndDate() + ")");
+                    "La fecha de fin de la fase no puede ser posterior a la del experimento (" 
+                    + experiment.getEndDate().format(formatter) + ")");
         }
     }
 
