@@ -3,12 +3,14 @@ package com.research.experimentplatform.service;
 import com.research.experimentplatform.dto.EnrollParticipantRequest;
 import com.research.experimentplatform.dto.EnrollmentDTO;
 import com.research.experimentplatform.exception.ForbiddenException;
+import com.research.experimentplatform.model.DesignType;
 import com.research.experimentplatform.model.Enrollment;
 import com.research.experimentplatform.model.EnrollmentStatus;
 import com.research.experimentplatform.model.Experiment;
 import com.research.experimentplatform.model.ExperimentStatus;
 import com.research.experimentplatform.model.Group;
 import com.research.experimentplatform.model.Participant;
+import com.research.experimentplatform.model.Phase;
 import com.research.experimentplatform.model.User;
 import com.research.experimentplatform.exception.BadRequestException;
 import com.research.experimentplatform.exception.ConflictException;
@@ -17,6 +19,7 @@ import com.research.experimentplatform.repository.EnrollmentRepository;
 import com.research.experimentplatform.repository.ExperimentRepository;
 import com.research.experimentplatform.repository.GroupRepository;
 import com.research.experimentplatform.repository.ParticipantRepository;
+import com.research.experimentplatform.repository.PhaseRepository;
 import com.research.experimentplatform.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,32 +46,31 @@ public class EnrollmentService {
     private final ParticipantRepository participantRepository;
     private final ExperimentRepository experimentRepository;
     private final GroupRepository groupRepository;
+    private final PhaseRepository phaseRepository;
     private final UserRepository userRepository;
 
     public EnrollmentService(EnrollmentRepository enrollmentRepository,
                              ParticipantRepository participantRepository,
                              ExperimentRepository experimentRepository,
                              GroupRepository groupRepository,
+                             PhaseRepository phaseRepository,
                              UserRepository userRepository) {
         this.enrollmentRepository = enrollmentRepository;
         this.participantRepository = participantRepository;
         this.experimentRepository = experimentRepository;
         this.groupRepository = groupRepository;
+        this.phaseRepository = phaseRepository;
         this.userRepository = userRepository;
     }
 
     @Transactional
     public EnrollmentDTO enrollParticipant(Long participantId, EnrollParticipantRequest request) {
-        // Buscamos el participante que se va a inscribir
         Participant participant = participantRepository.findById(participantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Participant not found"));
 
-        // Buscamos el experimento en el que se quiere inscribir
         Experiment experiment = experimentRepository.findById(request.getExperimentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Experiment not found"));
 
-        // Comprobamos que el participante no esté ya inscrito en este experimento
-        // Esto evita duplicados en la mayoría de casos (aunque luego hay un try-catch por si acaso)
         if (enrollmentRepository.existsByParticipantIdAndExperimentId(participantId, request.getExperimentId())) {
             throw new ConflictException("Participant already enrolled in this experiment");
         }
@@ -76,12 +79,10 @@ public class EnrollmentService {
             throw new BadRequestException("Experiment is not active");
         }
 
-        // Si el experimento no permite inscripción tardía, bloqueamos nuevos participantes
         if (!experiment.isAllowLateEnrollment()) {
             throw new BadRequestException("This experiment does not accept new participants after it has started. Use an invitation to join before the experiment begins.");
         }
 
-        // Si el experimento tiene contrato de consentimiento, el participante debe aceptarlo
         if (experiment.getConsentText() != null && !experiment.getConsentText().isBlank()) {
             if (!Boolean.TRUE.equals(request.getConsentAgreed())) {
                 throw new ForbiddenException("You must agree to the consent form to participate in this experiment");
@@ -94,29 +95,66 @@ public class EnrollmentService {
             enrollment.setConsentSignedAt(LocalDateTime.now());
         }
 
-        // Si en el request viene un grupo asignado, lo añadimos a la inscripción
-        // El grupo es opcional, puede ser null
         if (request.getGroupId() != null) {
+            // El investigador especificó un grupo concreto
             Group group = groupRepository.findById(request.getGroupId())
                     .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
-            // Validamos que el grupo pertenezca al experimento correcto
-            // No tiene sentido asignar un grupo de otro experimento
             if (!group.getExperiment().getId().equals(experiment.getId())) {
                 throw new BadRequestException("Group does not belong to this experiment");
             }
 
             enrollment.setGroup(group);
+
+        } else if (experiment.getDesignType() == DesignType.BETWEEN_SUBJECTS) {
+            // En Between-Subjects, si no se indicó grupo, asignamos al grupo con menos participantes
+            List<Group> grupos = groupRepository.findByExperimentId(experiment.getId());
+
+            if (!grupos.isEmpty()) {
+                Group grupoMasPequeno = null;
+                long minParticipantes = Long.MAX_VALUE;
+
+                for (Group g : grupos) {
+                    long cuenta = enrollmentRepository.countByGroupId(g.getId());
+                    if (cuenta < minParticipantes) {
+                        minParticipantes = cuenta;
+                        grupoMasPequeno = g;
+                    }
+                }
+
+                enrollment.setGroup(grupoMasPequeno);
+            }
         }
 
-        // Guardamos la inscripción en la base de datos
-        // El try-catch es por si dos personas intentan inscribirse a la vez (race condition)
-        // La base de datos tiene una constraint UNIQUE que lo previene, pero hay que capturar la excepción
+        if (experiment.getDesignType() == DesignType.WITHIN_SUBJECTS) {
+            // En Within-Subjects asignamos una secuencia de fases rotada (contrabalanceo)
+            // Participante 0 → A-B-C, participante 1 → B-C-A, participante 2 → C-A-B, etc.
+            List<Phase> fases = phaseRepository.findByExperimentIdOrderByPhaseOrderAsc(experiment.getId());
+
+            if (!fases.isEmpty()) {
+                // El desplazamiento depende de cuántos participantes hay ya inscritos
+                int numInscritos = enrollmentRepository.findByExperimentId(experiment.getId()).size();
+                int total = fases.size();
+
+                // Construimos la secuencia rotada como cadena "id1,id2,id3"
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < total; i++) {
+                    int indice = (i + numInscritos) % total;
+                    if (i > 0) {
+                        sb.append(",");
+                    }
+                    sb.append(fases.get(indice).getId());
+                }
+
+                enrollment.setPhaseSequence(sb.toString());
+            }
+        }
+
+        // try-catch por si dos inscripciones llegan a la vez (la constraint UNIQUE en BD lo previene)
         try {
             Enrollment persisted = enrollmentRepository.save(enrollment);
             return toDTO(persisted);
         } catch (DataIntegrityViolationException e) {
-            // Si salta esta excepción es porque ya existe la inscripción (constraint UNIQUE)
             throw new ConflictException("Participant already enrolled in this experiment");
         }
     }
@@ -227,17 +265,25 @@ public class EnrollmentService {
     }
 
     public EnrollmentDTO toDTO(Enrollment enrollment) {
+        Long groupId = null;
+        String groupName = null;
+        if (enrollment.getGroup() != null) {
+            groupId = enrollment.getGroup().getId();
+            groupName = enrollment.getGroup().getName();
+        }
+
         return new EnrollmentDTO(
                 enrollment.getId(),
                 enrollment.getParticipant().getId(),
                 enrollment.getExperiment().getId(),
                 enrollment.getExperiment().getTitle(),
-                enrollment.getGroup() != null ? enrollment.getGroup().getId() : null,
-                enrollment.getGroup() != null ? enrollment.getGroup().getName() : null,
+                groupId,
+                groupName,
                 enrollment.getStatus(),
                 enrollment.getEnrolledAt(),
                 enrollment.getCompletedAt(),
-                enrollment.getConsentSignedAt()
+                enrollment.getConsentSignedAt(),
+                enrollment.getPhaseSequence()
         );
     }
 }

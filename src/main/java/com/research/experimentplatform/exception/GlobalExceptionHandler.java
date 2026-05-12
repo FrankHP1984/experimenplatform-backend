@@ -40,8 +40,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
+        ex.printStackTrace();
+        String cause = ex.getMostSpecificCause().getMessage();
+        String message = (cause != null && cause.length() < 400) ? cause : "Data integrity violation";
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ErrorResponse(409, "Data integrity violation"));
+                .body(new ErrorResponse(409, message));
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)

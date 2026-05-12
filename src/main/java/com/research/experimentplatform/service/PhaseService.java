@@ -99,16 +99,16 @@ public class PhaseService {
 
         if (request.getStartDate() != null && request.getEndDate() != null
                 && !request.getEndDate().isAfter(request.getStartDate())) {
-            throw new BadRequestException("End date must be after start date");
+            throw new BadRequestException("La fecha de fin debe ser posterior a la de inicio");
         }
 
         if (experiment.getStartDate() != null && request.getStartDate() != null
                 && request.getStartDate().isBefore(experiment.getStartDate())) {
-            throw new BadRequestException("Phase start date cannot be before experiment start date");
+            throw new BadRequestException("La fase no puede empezar antes que el experimento");
         }
         if (experiment.getEndDate() != null && request.getEndDate() != null
                 && request.getEndDate().isAfter(experiment.getEndDate())) {
-            throw new BadRequestException("Phase end date cannot be after experiment end date");
+            throw new BadRequestException("La fase no puede terminar después del experimento");
         }
 
         int newOrder = request.getPhaseOrder() != null ? request.getPhaseOrder() : phase.getPhaseOrder();
@@ -153,7 +153,7 @@ public class PhaseService {
     private void validatePhaseDates(Experiment experiment, CreatePhaseRequest request) {
         if (request.getStartDate() != null && request.getEndDate() != null
                 && !request.getEndDate().isAfter(request.getStartDate())) {
-            throw new BadRequestException("End date must be after start date");
+            throw new BadRequestException("La fecha de fin debe ser posterior a la de inicio");
         }
     }
 
@@ -162,12 +162,12 @@ public class PhaseService {
         if (experiment.getStartDate() != null && request.getStartDate() != null
                 && request.getStartDate().isBefore(experiment.getStartDate())) {
             throw new BadRequestException(
-                    "Phase start date cannot be before experiment start date (" + experiment.getStartDate() + ")");
+                    "La fecha de inicio de la fase no puede ser anterior a la del experimento (" + experiment.getStartDate() + ")");
         }
         if (experiment.getEndDate() != null && request.getEndDate() != null
                 && request.getEndDate().isAfter(experiment.getEndDate())) {
             throw new BadRequestException(
-                    "Phase end date cannot be after experiment end date (" + experiment.getEndDate() + ")");
+                    "La fecha de fin de la fase no puede ser posterior a la del experimento (" + experiment.getEndDate() + ")");
         }
     }
 

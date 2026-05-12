@@ -5,11 +5,13 @@ import com.research.experimentplatform.dto.SubmitResponseRequest;
 import com.research.experimentplatform.model.DesignType;
 import com.research.experimentplatform.model.Enrollment;
 import com.research.experimentplatform.model.EnrollmentStatus;
+import com.research.experimentplatform.model.Phase;
 import com.research.experimentplatform.model.Question;
 import com.research.experimentplatform.model.Response;
 import com.research.experimentplatform.exception.BadRequestException;
 import com.research.experimentplatform.exception.ResourceNotFoundException;
 import com.research.experimentplatform.repository.EnrollmentRepository;
+import com.research.experimentplatform.repository.PhaseRepository;
 import com.research.experimentplatform.repository.QuestionRepository;
 import com.research.experimentplatform.repository.ResponseRepository;
 import org.springframework.stereotype.Service;
@@ -25,41 +27,36 @@ public class ResponseService {
     private final ResponseRepository responseRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final QuestionRepository questionRepository;
+    private final PhaseRepository phaseRepository;
 
     public ResponseService(ResponseRepository responseRepository,
                           EnrollmentRepository enrollmentRepository,
-                          QuestionRepository questionRepository) {
+                          QuestionRepository questionRepository,
+                          PhaseRepository phaseRepository) {
         this.responseRepository = responseRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.questionRepository = questionRepository;
+        this.phaseRepository = phaseRepository;
     }
 
     @Transactional
     public ResponseDTO submitResponse(Long enrollmentId, SubmitResponseRequest request) {
-        // Primero buscamos la inscripción del participante
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
 
-        // Validamos que la inscripción esté activa
-        // Si está COMPLETED, WITHDRAWN o PENDING no se pueden enviar respuestas
         if (enrollment.getStatus() != EnrollmentStatus.ACTIVE) {
             throw new BadRequestException("Enrollment is not active");
         }
 
-        // Buscamos la pregunta a la que se está respondiendo
         Question question = questionRepository.findById(request.getQuestionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
 
-        // Validación importante: la pregunta tiene que pertenecer al mismo experimento
-        // que la inscripción del participante, si no sería un error
-        // Navegamos por las relaciones: Question -> Phase -> Experiment
         Long enrollmentExperimentId = enrollment.getExperiment().getId();
         Long questionExperimentId = question.getPhase().getExperiment().getId();
         if (!enrollmentExperimentId.equals(questionExperimentId)) {
             throw new BadRequestException("Question does not belong to the enrollment's experiment");
         }
 
-        // Validamos que la fase esté dentro de su ventana temporal
         LocalDateTime now = LocalDateTime.now();
         var phase = question.getPhase();
         if (phase.getStartDate() != null && phase.getStartDate().isAfter(now)) {
@@ -69,7 +66,7 @@ public class ResponseService {
             throw new BadRequestException("This phase has already ended");
         }
 
-        // Validación Between-Subjects: la fase debe ser común o pertenecer al grupo del participante
+        // En Between-Subjects la fase debe ser común (sin grupo) o del grupo del participante
         if (enrollment.getExperiment().getDesignType() == DesignType.BETWEEN_SUBJECTS) {
             if (phase.getGroup() != null) {
                 Long phaseGroupId = phase.getGroup().getId();
@@ -80,21 +77,69 @@ public class ResponseService {
             }
         }
 
-        // Buscamos si ya existe una respuesta para esta pregunta y esta inscripción
+        // En PRETEST_POSTTEST bloqueamos una fase hasta que la anterior esté completamente respondida
+        if (enrollment.getExperiment().getDesignType() == DesignType.PRETEST_POSTTEST) {
+            List<Phase> fases = phaseRepository.findByExperimentIdOrderByPhaseOrderAsc(
+                    enrollment.getExperiment().getId()
+            );
+
+            int indiceFaseActual = -1;
+            for (int i = 0; i < fases.size(); i++) {
+                if (fases.get(i).getId().equals(phase.getId())) {
+                    indiceFaseActual = i;
+                    break;
+                }
+            }
+
+            // Si no es la primera fase, verificamos que la anterior esté completa
+            if (indiceFaseActual > 0) {
+                Phase faseAnterior = fases.get(indiceFaseActual - 1);
+                long totalPreguntas = questionRepository.countByPhaseId(faseAnterior.getId());
+                long respuestasDadas = responseRepository
+                        .findByEnrollmentIdAndPhaseId(enrollmentId, faseAnterior.getId())
+                        .size();
+
+                if (respuestasDadas < totalPreguntas) {
+                    throw new BadRequestException(
+                            "Debes completar la fase '" + faseAnterior.getName()
+                            + "' antes de acceder a esta fase."
+                    );
+                }
+            }
+        }
+
+        // Si ya respondió antes, actualizamos; si no, creamos nueva respuesta
         Response response = responseRepository
                 .findByEnrollmentIdAndQuestionId(enrollmentId, request.getQuestionId())
                 .orElse(new Response(enrollment, question));
 
-        // Validamos y seteamos el valor de la respuesta según el tipo de pregunta
         validateAndSetResponseValue(response, question, request);
 
-        // Guardamos en la base de datos y devolvemos el DTO
         Response savedResponse = responseRepository.save(response);
+
+        // Para CROSS_SECTIONAL: cuando se responden todas las preguntas, completar la inscripción automáticamente
+        if (enrollment.getExperiment().getDesignType() == DesignType.CROSS_SECTIONAL) {
+            List<Phase> fases = phaseRepository.findByExperimentIdOrderByPhaseOrderAsc(
+                    enrollment.getExperiment().getId()
+            );
+
+            if (!fases.isEmpty()) {
+                Phase fasePrincipal = fases.get(0);
+                long totalPreguntas = questionRepository.countByPhaseId(fasePrincipal.getId());
+                long respuestasActuales = responseRepository.findByEnrollmentId(enrollmentId).size();
+
+                if (respuestasActuales >= totalPreguntas && enrollment.getStatus() == EnrollmentStatus.ACTIVE) {
+                    enrollment.setStatus(EnrollmentStatus.COMPLETED);
+                    enrollment.setCompletedAt(LocalDateTime.now());
+                    enrollmentRepository.save(enrollment);
+                }
+            }
+        }
+
         return convertToDTO(savedResponse);
     }
 
     private void validateAndSetResponseValue(Response response, Question question, SubmitResponseRequest request) {
-        // Validamos y seteamos el valor de la respuesta según el tipo de pregunta
         switch (question.getType()) {
             case TEXT:
                 if (request.getTextValue() == null && question.getRequired()) {

@@ -76,9 +76,6 @@ public class ExperimentService {
             throw new ForbiddenException("Only researchers can create experiments");
         }
 
-        // Creamos el experimento con los datos del request
-        // Todos los experimentos empiezan en estado DRAFT por defecto
-        // hasta que el investigador los active manualmente
         validateExperimentDates(request.startDate(), request.endDate());
 
         Experiment experiment = new Experiment();
@@ -155,8 +152,6 @@ public class ExperimentService {
             throw new BadRequestException("Cannot change the start date of an active experiment");
         }
 
-        // Resolvemos las fechas efectivas combinando las nuevas con las existentes
-        // para poder validar la coherencia entre ellas aunque solo cambie una de las dos
         LocalDateTime effectiveStart;
         if (request.startDate() != null) {
             effectiveStart = request.startDate();
@@ -172,7 +167,6 @@ public class ExperimentService {
         }
         validateExperimentDates(effectiveStart, effectiveEnd);
 
-        // Actualización parcial: solo modificamos los campos que vienen en el request
         if (request.title() != null) {
             experiment.setTitle(request.title());
         }
@@ -190,7 +184,6 @@ public class ExperimentService {
         }
         if (request.status() != null) {
             validateStatusTransition(experiment.getStatus(), request.status());
-            // Si el experimento pasa a ACTIVE, activamos todas las inscripciones que estaban esperando
             if (request.status() == ExperimentStatus.ACTIVE) {
                 validateDesignTypeForActivation(experiment);
                 List<Enrollment> pending = enrollmentRepository.findByExperimentIdAndStatus(
@@ -220,7 +213,6 @@ public class ExperimentService {
             if (!ownershipChecker.isMemberOf(supabaseId, team.getId())) {
                 throw new ForbiddenException("You are not a member of this team");
             }
-            // La organización efectiva es la que tenga el experimento después del posible cambio anterior
             Organization experimentOrg = experiment.getOrganization();
             if (team.getOrganization() != null && experimentOrg != null
                     && !team.getOrganization().getId().equals(experimentOrg.getId())) {
