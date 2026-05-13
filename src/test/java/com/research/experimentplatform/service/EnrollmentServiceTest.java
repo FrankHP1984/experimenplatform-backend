@@ -65,9 +65,6 @@ class EnrollmentServiceTest {
         experiment.setTitle("Experimento test");
         experiment.setStatus(ExperimentStatus.ACTIVE);
         experiment.setOwner(user);
-        // Los tests de esta clase prueban la lógica de inscripción en sí,
-        // no la restricción de entrada tardía, así que la habilitamos por defecto.
-        experiment.setAllowLateEnrollment(true);
     }
 
     // --- enrollParticipant ---
@@ -114,7 +111,6 @@ class EnrollmentServiceTest {
         EnrollmentDTO result = enrollmentService.enrollParticipant(1L, request);
 
         assertEquals(EnrollmentStatus.ACTIVE, result.getStatus());
-        assertNotNull(result.getConsentSignedAt());
     }
 
     @Test
@@ -130,22 +126,6 @@ class EnrollmentServiceTest {
         when(enrollmentRepository.existsByParticipantIdAndExperimentId(1L, 1L)).thenReturn(false);
 
         assertThrows(ForbiddenException.class, () ->
-                enrollmentService.enrollParticipant(1L, request));
-    }
-
-    @Test
-    void enrollParticipant_sinPermitirEntradaTardia_lanzaBadRequest() {
-        // El experimento ya está activo pero no acepta nuevos participantes
-        experiment.setAllowLateEnrollment(false);
-
-        EnrollParticipantRequest request = new EnrollParticipantRequest();
-        request.setExperimentId(1L);
-
-        when(participantRepository.findById(1L)).thenReturn(Optional.of(participant));
-        when(experimentRepository.findById(1L)).thenReturn(Optional.of(experiment));
-        when(enrollmentRepository.existsByParticipantIdAndExperimentId(1L, 1L)).thenReturn(false);
-
-        assertThrows(BadRequestException.class, () ->
                 enrollmentService.enrollParticipant(1L, request));
     }
 

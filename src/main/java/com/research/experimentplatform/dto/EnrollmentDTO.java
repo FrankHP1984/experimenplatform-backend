@@ -23,6 +23,5 @@ public class EnrollmentDTO {
     private EnrollmentStatus status;
     private LocalDateTime enrolledAt;
     private LocalDateTime completedAt;
-    private LocalDateTime consentSignedAt;
     private String phaseSequence;
 }

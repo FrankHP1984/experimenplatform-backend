@@ -25,9 +25,4 @@ public class ExperimentDTO {
     private Long ownerId;
     private String consentText;
     private String debriefingText;
-    private Long organizationId;
-    private String organizationName;
-    private Long teamId;
-    private String teamName;
-    private boolean allowLateEnrollment;
 }

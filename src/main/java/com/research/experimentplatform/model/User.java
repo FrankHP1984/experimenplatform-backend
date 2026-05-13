@@ -27,10 +27,6 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id")
-    private Organization organization;
-
     private String firstName;
     private String lastName;
     private String institution;

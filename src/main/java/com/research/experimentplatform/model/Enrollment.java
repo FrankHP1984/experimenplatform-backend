@@ -42,11 +42,6 @@ public class Enrollment {
 
     private LocalDateTime completedAt;
 
-    private LocalDateTime consentSignedAt;
-
-    // IDs de fases separados por coma en el orden asignado a este participante
-    // Solo se usa en experimentos Within-Subjects (contrabalanceo)
-    // Ejemplo: "3,1,2" significa que el participante verá fase 3 primero, luego 1, luego 2
     @Column(name = "phase_sequence")
     private String phaseSequence;
 

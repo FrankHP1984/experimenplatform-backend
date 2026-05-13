@@ -98,7 +98,7 @@ public class ExperimentController {
         String supabaseId = (String) authentication.getDetails();
         ExperimentStatus status = ExperimentStatus.valueOf(body.get("status"));
         UpdateExperimentRequest request = new UpdateExperimentRequest(
-                null, null, null, null, null, status, null, null, null, null);
+                null, null, null, null, null, status, null, null);
         return ResponseEntity.ok(experimentService.updateExperiment(id, request, supabaseId));
     }
 

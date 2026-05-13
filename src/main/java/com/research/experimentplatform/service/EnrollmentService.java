@@ -20,7 +20,6 @@ import com.research.experimentplatform.repository.ExperimentRepository;
 import com.research.experimentplatform.repository.GroupRepository;
 import com.research.experimentplatform.repository.ParticipantRepository;
 import com.research.experimentplatform.repository.PhaseRepository;
-import com.research.experimentplatform.repository.ResponseRepository;
 import com.research.experimentplatform.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -49,7 +48,6 @@ public class EnrollmentService {
     private final ExperimentRepository experimentRepository;
     private final GroupRepository groupRepository;
     private final PhaseRepository phaseRepository;
-    private final ResponseRepository responseRepository;
     private final UserRepository userRepository;
 
     public EnrollmentService(EnrollmentRepository enrollmentRepository,
@@ -57,14 +55,12 @@ public class EnrollmentService {
                              ExperimentRepository experimentRepository,
                              GroupRepository groupRepository,
                              PhaseRepository phaseRepository,
-                             ResponseRepository responseRepository,
                              UserRepository userRepository) {
         this.enrollmentRepository = enrollmentRepository;
         this.participantRepository = participantRepository;
         this.experimentRepository = experimentRepository;
         this.groupRepository = groupRepository;
         this.phaseRepository = phaseRepository;
-        this.responseRepository = responseRepository;
         this.userRepository = userRepository;
     }
 
@@ -84,37 +80,18 @@ public class EnrollmentService {
             throw new BadRequestException("Experiment is not active");
         }
 
-        if (!experiment.isAllowLateEnrollment()) {
-            throw new BadRequestException("This experiment does not accept new participants after it has started. Use an invitation to join before the experiment begins.");
-        }
-
-        if (experiment.getConsentText() != null && !experiment.getConsentText().isBlank()) {
-            if (!Boolean.TRUE.equals(request.getConsentAgreed())) {
-                throw new ForbiddenException("You must agree to the consent form to participate in this experiment");
-            }
-        }
-
         Enrollment enrollment = new Enrollment(participant, experiment, EnrollmentStatus.ACTIVE);
 
-        if (experiment.getConsentText() != null && !experiment.getConsentText().isBlank()) {
-            enrollment.setConsentSignedAt(LocalDateTime.now());
-        }
-
         if (request.getGroupId() != null) {
-            // El investigador especificó un grupo concreto
             Group group = groupRepository.findById(request.getGroupId())
                     .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-
             if (!group.getExperiment().getId().equals(experiment.getId())) {
                 throw new BadRequestException("Group does not belong to this experiment");
             }
-
             enrollment.setGroup(group);
 
         } else if (experiment.getDesignType() == DesignType.BETWEEN_SUBJECTS) {
-            // En Between-Subjects, si no se indicó grupo, asignamos aleatoriamente
             List<Group> grupos = groupRepository.findByExperimentId(experiment.getId());
-
             if (!grupos.isEmpty()) {
                 int indiceAleatorio = new Random().nextInt(grupos.size());
                 enrollment.setGroup(grupos.get(indiceAleatorio));
@@ -122,16 +99,10 @@ public class EnrollmentService {
         }
 
         if (experiment.getDesignType() == DesignType.WITHIN_SUBJECTS) {
-            // En Within-Subjects asignamos una secuencia de fases rotada (contrabalanceo)
-            // Participante 0 → A-B-C, participante 1 → B-C-A, participante 2 → C-A-B, etc.
             List<Phase> fases = phaseRepository.findByExperimentIdOrderByPhaseOrderAsc(experiment.getId());
-
             if (!fases.isEmpty()) {
-                // El desplazamiento depende de cuántos participantes hay ya inscritos
                 int numInscritos = enrollmentRepository.findByExperimentId(experiment.getId()).size();
                 int total = fases.size();
-
-                // Construimos la secuencia rotada como cadena "id1,id2,id3"
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < total; i++) {
                     int indice = (i + numInscritos) % total;
@@ -140,12 +111,10 @@ public class EnrollmentService {
                     }
                     sb.append(fases.get(indice).getId());
                 }
-
                 enrollment.setPhaseSequence(sb.toString());
             }
         }
 
-        // try-catch por si dos inscripciones llegan a la vez (la constraint UNIQUE en BD lo previene)
         try {
             Enrollment persisted = enrollmentRepository.save(enrollment);
             return toDTO(persisted);
@@ -247,32 +216,6 @@ public class EnrollmentService {
         return toDTO(enrollmentRepository.save(enrollment));
     }
 
-    @Transactional
-    public void deleteParticipantData(Long enrollmentId) {
-        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
-
-        // Borrar todas las respuestas de este participante en este experimento
-        responseRepository.deleteByEnrollmentId(enrollmentId);
-
-        // Marcar la inscripción como retirada
-        enrollment.setStatus(EnrollmentStatus.WITHDRAWN);
-        enrollmentRepository.save(enrollment);
-    }
-
-    @Transactional
-    public EnrollmentDTO signConsent(Long enrollmentId) {
-        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
-
-        if (enrollment.getConsentSignedAt() == null) {
-            enrollment.setConsentSignedAt(LocalDateTime.now());
-            enrollmentRepository.save(enrollment);
-        }
-
-        return toDTO(enrollment);
-    }
-
     public long countActiveEnrollments(Long experimentId) {
         return enrollmentRepository.countByExperimentIdAndStatus(experimentId, EnrollmentStatus.ACTIVE);
     }
@@ -303,7 +246,6 @@ public class EnrollmentService {
                 enrollment.getStatus(),
                 enrollment.getEnrolledAt(),
                 enrollment.getCompletedAt(),
-                enrollment.getConsentSignedAt(),
                 enrollment.getPhaseSequence()
         );
     }

@@ -43,20 +43,9 @@ public class Experiment {
     @Column(nullable = false)
     private ExperimentStatus status;
 
-    @Column(nullable = false)
-    private boolean allowLateEnrollment = false;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id")
-    private Organization organization;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id")
-    private ResearchTeam team;
 
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Phase> phases = new ArrayList<>();
@@ -66,6 +55,9 @@ public class Experiment {
 
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Enrollment> enrollments = new ArrayList<>();
+
+    @Column(nullable = false)
+    private boolean allowLateEnrollment = false;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

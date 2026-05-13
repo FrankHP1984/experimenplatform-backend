@@ -4,6 +4,8 @@ import com.research.experimentplatform.dto.CreateExperimentRequest;
 import com.research.experimentplatform.dto.ExperimentDTO;
 import com.research.experimentplatform.dto.UpdateExperimentRequest;
 import com.research.experimentplatform.model.DesignType;
+import com.research.experimentplatform.model.Enrollment;
+import com.research.experimentplatform.model.EnrollmentStatus;
 import com.research.experimentplatform.model.Experiment;
 import com.research.experimentplatform.model.ExperimentStatus;
 import com.research.experimentplatform.model.Group;
@@ -13,20 +15,14 @@ import com.research.experimentplatform.model.UserRole;
 import com.research.experimentplatform.exception.BadRequestException;
 import com.research.experimentplatform.exception.ForbiddenException;
 import com.research.experimentplatform.exception.ResourceNotFoundException;
-import com.research.experimentplatform.model.Enrollment;
-import com.research.experimentplatform.model.EnrollmentStatus;
-import com.research.experimentplatform.model.Organization;
-import com.research.experimentplatform.model.ResearchTeam;
 import com.research.experimentplatform.repository.EnrollmentRepository;
 import com.research.experimentplatform.repository.ExperimentRepository;
 import com.research.experimentplatform.repository.GroupRepository;
-import com.research.experimentplatform.repository.OrganizationRepository;
 import com.research.experimentplatform.repository.PhaseRepository;
-import com.research.experimentplatform.repository.ResearchTeamRepository;
 import com.research.experimentplatform.repository.UserRepository;
+import com.research.experimentplatform.security.OwnershipChecker;
 
 import java.util.List;
-import com.research.experimentplatform.security.OwnershipChecker;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,32 +33,23 @@ import java.time.LocalDateTime;
 @Service
 public class ExperimentService {
 
-    // Validaciones de transiciones de estado
-    // DRAFT -> ACTIVE -> FINISHED (no se puede volver atrás)
-
     private final ExperimentRepository experimentRepository;
     private final UserRepository userRepository;
-    private final OrganizationRepository organizationRepository;
     private final PhaseRepository phaseRepository;
     private final GroupRepository groupRepository;
-    private final ResearchTeamRepository researchTeamRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final OwnershipChecker ownershipChecker;
 
     public ExperimentService(ExperimentRepository experimentRepository,
                              UserRepository userRepository,
-                             OrganizationRepository organizationRepository,
                              PhaseRepository phaseRepository,
                              GroupRepository groupRepository,
-                             ResearchTeamRepository researchTeamRepository,
                              EnrollmentRepository enrollmentRepository,
                              OwnershipChecker ownershipChecker) {
         this.experimentRepository = experimentRepository;
         this.userRepository = userRepository;
-        this.organizationRepository = organizationRepository;
         this.phaseRepository = phaseRepository;
         this.groupRepository = groupRepository;
-        this.researchTeamRepository = researchTeamRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.ownershipChecker = ownershipChecker;
     }
@@ -88,31 +75,6 @@ public class ExperimentService {
         experiment.setOwner(owner);
         experiment.setConsentText(request.consentText());
         experiment.setDebriefingText(request.debriefingText());
-        if (request.allowLateEnrollment() != null) {
-            experiment.setAllowLateEnrollment(request.allowLateEnrollment());
-        }
-
-        if (request.organizationId() != null) {
-            Organization organization = organizationRepository.findById(request.organizationId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
-            experiment.setOrganization(organization);
-        }
-
-        if (request.teamId() != null) {
-            ResearchTeam team = researchTeamRepository.findById(request.teamId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
-            if (!ownershipChecker.isMemberOf(supabaseId, team.getId())) {
-                throw new ForbiddenException("You are not a member of this team");
-            }
-            // Si el equipo pertenece a una organización y el experimento también tiene organización,
-            // ambas deben coincidir para mantener la coherencia
-            if (team.getOrganization() != null && experiment.getOrganization() != null
-                    && !team.getOrganization().getId().equals(experiment.getOrganization().getId())) {
-                throw new BadRequestException(
-                        "The team belongs to a different organization than the experiment");
-            }
-            experiment.setTeam(team);
-        }
 
         Experiment created = experimentRepository.save(experiment);
         return convertToDTO(created);
@@ -141,7 +103,9 @@ public class ExperimentService {
         Experiment experiment = experimentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Experiment not found"));
 
-        validateOwnership(experiment, supabaseId);
+        if (!ownershipChecker.canModify(experiment, supabaseId)) {
+            throw new ForbiddenException("You do not have permission to modify this experiment");
+        }
 
         if (experiment.getStatus() == ExperimentStatus.FINISHED) {
             if (request.startDate() != null || request.endDate() != null) {
@@ -196,34 +160,11 @@ public class ExperimentService {
             }
             experiment.setStatus(request.status());
         }
-        if (request.allowLateEnrollment() != null) {
-            experiment.setAllowLateEnrollment(request.allowLateEnrollment());
-        }
         if (request.consentText() != null) {
             experiment.setConsentText(request.consentText());
         }
         if (request.debriefingText() != null) {
             experiment.setDebriefingText(request.debriefingText());
-        }
-        if (request.organizationId() != null) {
-            Organization organization = organizationRepository.findById(request.organizationId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
-            experiment.setOrganization(organization);
-        }
-
-        if (request.teamId() != null) {
-            ResearchTeam team = researchTeamRepository.findById(request.teamId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
-            if (!ownershipChecker.isMemberOf(supabaseId, team.getId())) {
-                throw new ForbiddenException("You are not a member of this team");
-            }
-            Organization experimentOrg = experiment.getOrganization();
-            if (team.getOrganization() != null && experimentOrg != null
-                    && !team.getOrganization().getId().equals(experimentOrg.getId())) {
-                throw new BadRequestException(
-                        "The team belongs to a different organization than the experiment");
-            }
-            experiment.setTeam(team);
         }
 
         Experiment result = experimentRepository.save(experiment);
@@ -235,7 +176,9 @@ public class ExperimentService {
         Experiment experiment = experimentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Experiment not found"));
 
-        validateOwnership(experiment, supabaseId);
+        if (!ownershipChecker.canModify(experiment, supabaseId)) {
+            throw new ForbiddenException("You do not have permission to modify this experiment");
+        }
 
         if (experiment.getStatus() != ExperimentStatus.ACTIVE) {
             throw new BadRequestException("Only active experiments can be finished");
@@ -249,17 +192,13 @@ public class ExperimentService {
     public void deleteExperiment(Long id, String supabaseId) {
         Experiment experiment = experimentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Experiment not found"));
-        validateOwnership(experiment, supabaseId);
+        if (!ownershipChecker.canModify(experiment, supabaseId)) {
+            throw new ForbiddenException("You do not have permission to modify this experiment");
+        }
         if (experiment.getStatus() == ExperimentStatus.ACTIVE) {
             throw new BadRequestException("Cannot delete an active experiment. Finish it first.");
         }
         experimentRepository.delete(experiment);
-    }
-
-    private void validateOwnership(Experiment experiment, String supabaseId) {
-        if (!ownershipChecker.canModify(experiment, supabaseId)) {
-            throw new ForbiddenException("You do not have permission to modify this experiment");
-        }
     }
 
     private void validateDesignTypeForActivation(Experiment experiment) {
@@ -324,35 +263,18 @@ public class ExperimentService {
         if (currentStatus == newStatus) {
             return;
         }
-        // Validar transiciones permitidas
         if (currentStatus == ExperimentStatus.DRAFT && newStatus != ExperimentStatus.ACTIVE) {
             throw new BadRequestException("Un experimento en borrador solo puede activarse");
         }
-        
         if (currentStatus == ExperimentStatus.ACTIVE && newStatus != ExperimentStatus.FINISHED) {
             throw new BadRequestException("Un experimento activo solo puede finalizarse");
         }
-        
         if (currentStatus == ExperimentStatus.FINISHED) {
             throw new BadRequestException("No se puede cambiar el estado de un experimento finalizado");
         }
     }
 
     public ExperimentDTO convertToDTO(Experiment experiment) {
-        Long organizationId = null;
-        String organizationName = null;
-        if (experiment.getOrganization() != null) {
-            organizationId = experiment.getOrganization().getId();
-            organizationName = experiment.getOrganization().getName();
-        }
-
-        Long teamId = null;
-        String teamName = null;
-        if (experiment.getTeam() != null) {
-            teamId = experiment.getTeam().getId();
-            teamName = experiment.getTeam().getName();
-        }
-
         return new ExperimentDTO(
                 experiment.getId(),
                 experiment.getTitle(),
@@ -363,12 +285,7 @@ public class ExperimentService {
                 experiment.getStatus(),
                 experiment.getOwner().getId(),
                 experiment.getConsentText(),
-                experiment.getDebriefingText(),
-                organizationId,
-                organizationName,
-                teamId,
-                teamName,
-                experiment.isAllowLateEnrollment()
+                experiment.getDebriefingText()
         );
     }
 }

@@ -155,7 +155,6 @@ public class InvitationService {
                 : EnrollmentStatus.PENDING;
 
         Enrollment enrollment = new Enrollment(participant, experiment, enrollmentStatus);
-        enrollment.setConsentSignedAt(LocalDateTime.now());
 
         List<Group> experimentGroups = groupRepository.findByExperimentId(experiment.getId());
         if (!experimentGroups.isEmpty()) {

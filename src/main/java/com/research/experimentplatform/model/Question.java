@@ -44,7 +44,7 @@ public class Question {
     @Column(nullable = false)
     private Integer questionOrder;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "boolean default false")
     private boolean attentionCheck = false;
 
     @Column(length = 500)
